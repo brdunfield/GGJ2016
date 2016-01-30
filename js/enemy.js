@@ -9,11 +9,19 @@ var Enemy = function(x, y, type) {
         this.hp = 1;
     }
 }
-Enemy.update = function(player){
+Enemy.prototype.update = function(player, elapsedtime){
     // different AI
     // "test" just walks towards player in the x direction
-    
-    if (type == "test") {
-        //var dist = 
+    if (this.hp == 0) {
+        // die
     }
+    if (this.type == "test") {
+        var dist = this.pos.x - player.pos.x;
+        // add the amount we can move at speed
+        this.pos.x += (-dist/Math.abs(dist) * this.speed*elapsedtime/1000);
+    }
+}
+
+Enemy.prototype.die = function(elapsedtime) {
+    
 }

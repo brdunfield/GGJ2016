@@ -16,7 +16,7 @@ var Engine = function(canvasID) {
     // Game Variables
     this.viewport = {x:0,y:0};
     
-    this.player = {pos: {x:300, y:100},
+    this.player = {pos: {x:300, y:700},
                  vel:{x:0,y:0},
                    speed: 200,
                  mass: 10}
@@ -30,7 +30,7 @@ var Engine = function(canvasID) {
     this.conversation = null;
     
     this.enemies = [];
-    this.enemies.push(new Enemy(17,1,"test"));
+    this.enemies.push(new Enemy(17,14,"test"));
     
     /*
         ======================= Time based Motion Variables =======================
@@ -41,7 +41,7 @@ var Engine = function(canvasID) {
     this.arrowSpeed = 600;
     this.arrow = null;
     
-    this.gravity = 1;
+    this.gravity = 2;
     
     // Assets and asset loading variables
 	this.images = {};
@@ -83,6 +83,12 @@ Engine.prototype.animate = function(time) {
         ======================= Update =======================
     */
     
+    // remove expired enemies
+    for (var e = this.enemies.length-1; e >= 0; e--) {
+        if (this.enemies[e].hp == 0)
+            this.enemies.splice(e,1);
+    }
+    
     // Update entity positions.
     
     // apply gravity to player
@@ -95,9 +101,11 @@ Engine.prototype.animate = function(time) {
         this.viewport.x -= this.player.speed * (elapsedTime / 1000);
     }
     
-    // apply gravity to enemies
+    // apply gravity to enemies and update
     for (var e=0; e < this.enemies.length; e++) {
         this.enemies[e] = this.physics(this.enemies[e], elapsedTime);
+        
+        this.enemies[e].update(this.player, elapsedTime);
     }
     
     // if player has fallen off the screen, respawn
@@ -114,12 +122,28 @@ Engine.prototype.animate = function(time) {
         this.arrow.pos.x += (d/dist)*(this.arrow.dest.x - this.arrow.pos.x);
         this.arrow.pos.y += (d/dist)*(this.arrow.dest.y - this.arrow.pos.y);
         
-        if (dist < 6) {
+        // check arrow collision
+        // get arrow tile and compare
+        var arrowTile = {x:Math.floor(this.arrow.pos.x/50), y:Math.floor(this.arrow.pos.y/50)};
+        if (level[arrowTile.x][arrowTile.y] != undefined) {
+            // we hit a tile - arrow dies
+            this.arrow = null;
+        } else if (dist < 6) {
             this.arrow = null
+        } else {
+            // check enemy collisions
+            for (var e=0; e < this.enemies.length; e++) {
+                var eTile = {x: Math.floor(this.enemies[e].pos.x/50), y: Math.floor(this.enemies[e].pos.y/50)};
+                if (arrowTile.x == eTile.x && arrowTile.y == eTile.y - 1) { // arrows are -1 in y from the rest of entities because they are not a full tile
+                    // enemy takes damage and arrow dies
+                    this.enemies[e].hp --;
+                    this.arrow = null;
+                    break;
+                }
+            }
         }
+        
     }
-    // check arrow collision
-    // get arrow tile and compare
     
     // Check for any events at our x pos
     var playerTile = {x: Math.floor((this.player.pos.x-this.viewport.x)/50), y:Math.floor(this.player.pos.y/50)}
@@ -194,7 +218,9 @@ Engine.prototype.render = function() {
     // draw line from player to arrow destination
     if (this.arrowPull) {
         ctx.strokeStyle = "#00894a";
-        ctx.moveTo(this.player.pos.x + 25, this.player.pos.y -25);
+        
+        ctx.beginPath();
+        ctx.moveTo(this.player.pos.x + this.viewport.x + 25, this.player.pos.y -25);
         ctx.lineTo(this.mousePos.x, this.mousePos.y)
         ctx.stroke();
         
@@ -324,7 +350,7 @@ Engine.prototype.keyPressed = function(e) {
         case 39: this.moving = 'right'; break; // right
         case 32: // jump
             if (this.player.vel.y == 0)
-                this.player.vel.y = -1000;
+                this.player.vel.y = -650;
             break;
     }
     
@@ -367,6 +393,26 @@ Engine.prototype.mouseDown = function(e) {
                         this.dialog = null;
                     }
                 }
+            } else {
+                // attack
+                // TODO - animation
+                
+                // check the 4 tiles in front of the player
+                // player tile.x + 1 and +2
+                // player tile.y -0 -1
+                var playerTile = {x:Math.floor(this.player.pos.x/50),y:Math.floor(this.player.pos.y/50)}
+                for (var e=0; e < this.enemies.length; e++) {
+                    // compare against those 4 tiles
+                    var enemyTile = {x:Math.floor(this.enemies[e].pos.x/50),y:Math.floor(this.enemies[e].pos.y/50)};
+                    if (enemyTile.y == playerTile.y || enemyTile.y == playerTile.y - 1) {
+                        if (enemyTile.x == playerTile.x + 1 || enemyTile.x == playerTile.x + 2) {
+                            console.log("Enemy hit by sword!");
+                            this.enemies[e].hp --;
+                        }
+                    }
+                    
+                }
+                
             }
             break;
         case 3:
