@@ -14,6 +14,6 @@ Enemy.update = function(player){
     // "test" just walks towards player in the x direction
     
     if (type == "test") {
-        
+        //var dist = 
     }
 }
