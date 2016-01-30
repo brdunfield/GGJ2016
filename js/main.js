@@ -15,8 +15,11 @@ var Engine = function(canvasID) {
     
     // Game Variables
     this.viewport = {x:0,y:0};
-    this.playerPos = {x:300, y:700};
-    this.playerVel = {x:0,y:0};
+    
+    this.player = {pos: {x:300, y:100},
+                 vel:{x:0,y:0},
+                   speed: 200,
+                 mass: 10}
     this.arrowPull = false;
     
     this.mousePos = {x:0, y:0};
@@ -24,14 +27,21 @@ var Engine = function(canvasID) {
     this.level = level;
     
     this.dialog = null;
+    this.conversation = null;
+    
+    this.enemies = [];
+    this.enemies.push(new Enemy(17,1,"test"));
+    
     /*
         ======================= Time based Motion Variables =======================
     */
     // speeds are in px/s
     this.moving = null;
     this.playerSpeed = 200;
-    this.arrowSpeed = 20;
+    this.arrowSpeed = 600;
     this.arrow = null;
+    
+    this.gravity = 1;
     
     // Assets and asset loading variables
 	this.images = {};
@@ -76,46 +86,51 @@ Engine.prototype.animate = function(time) {
     // Update entity positions.
     
     // apply gravity to player
-    var g = 100;
-    var playerm = 10;
-    this.playerVel.y = this.playerVel.y + (g*playerm * elapsedTime/1000);
-    
-    this.playerPos.y = this.playerPos.y + (this.playerVel.y * elapsedTime/1000);
-    
-    // Use elapsedTime variable declared above.
-    // px to move = entity.speed (px/s) * elapsedTime(ms) * (1s / 1000ms)
-    
-    // collision detection to stop falling
-    // check the y tile below the player
-    var playerTile = {x: Math.floor((this.playerPos.x-this.viewport.x)/50), y:Math.floor(this.playerPos.y/50)}
-    if (level[playerTile.x][playerTile.y] != undefined) {
-        // reset position to top of tile and kill velocity
-        this.playerPos.y = (playerTile.y) * 50;
-        this.playerVel.y = 0;
-    }
+    this.player = this.physics(this.player, elapsedTime);
     
     // Update player position if there has been a key press
     // don't move if there's a dialog to deal with
     if (this.moving !== null && !this.dialog) {
-        this.viewport.x -= this.playerSpeed * (elapsedTime / 1000);
+        this.player.pos.x += this.player.speed * (elapsedTime / 1000);
+        this.viewport.x -= this.player.speed * (elapsedTime / 1000);
+    }
+    
+    // apply gravity to enemies
+    for (var e=0; e < this.enemies.length; e++) {
+        this.enemies[e] = this.physics(this.enemies[e], elapsedTime);
     }
     
     // if player has fallen off the screen, respawn
-    if (this.playerPos.y > window.innerHeight) {
+    if (this.player.pos.y > window.innerHeight) {
         this.respawn();
     }
     
     // update arrow if any
     if (this.arrow) {
         // get arrow vector line, and move along it at arrow speed
-        //TODO
+        var dist = Math.sqrt(Math.pow(this.arrow.dest.x - this.arrow.pos.x,2) + Math.pow(this.arrow.dest.y - this.arrow.pos.y,2));
+        // d = how much the arrow has moved
+        var d = this.arrowSpeed * elapsedTime/1000;
+        this.arrow.pos.x += (d/dist)*(this.arrow.dest.x - this.arrow.pos.x);
+        this.arrow.pos.y += (d/dist)*(this.arrow.dest.y - this.arrow.pos.y);
+        
+        if (dist < 6) {
+            this.arrow = null
+        }
     }
+    // check arrow collision
+    // get arrow tile and compare
     
     // Check for any events at our x pos
+    var playerTile = {x: Math.floor((this.player.pos.x-this.viewport.x)/50), y:Math.floor(this.player.pos.y/50)}
     if (events[playerTile.x] != undefined && events[playerTile.x] != null) {
         var e = events[playerTile.x];
         if (e.type === "dialog") {
             this.dialog = e;
+        } else if (e.type === "conversation") {
+            this.conversation = e;
+            // TODO - autoplay
+            this.conversation.i = 0;
         }
         
         // remove the event
@@ -149,7 +164,8 @@ Engine.prototype.render = function() {
     // Background
     
     // render level present in the viewport
-    for (var x=Math.floor(-this.viewport.x/50); x < window.innerWidth/50; x++) {     
+    var startx = Math.floor(-this.viewport.x/50)
+    for (var x=startx; x < (window.innerWidth/50) + startx + 1; x++) {     
         for( var y=0; y < window.innerHeight/50; y++) {
             // check if there's a tile for this tile
             //console.log("checking: " + x + ", " + y);
@@ -167,19 +183,33 @@ Engine.prototype.render = function() {
     
     // player
     ctx.fillStyle = "#d800ff";
-    ctx.fillRect(this.playerPos.x - 25, this.playerPos.y-50, 50, 50);
+    ctx.fillRect(this.player.pos.x + this.viewport.x - 25, this.player.pos.y-50, 50, 50);
     ctx.fill();
     
+    // enemies
+    ctx.fillStyle = "#832300";
+    for (var e=0; e< this.enemies.length; e++) {
+        // for now just render a red square
+        var enemy = this.enemies[e];
+        ctx.fillRect(enemy.pos.x + this.viewport.x, enemy.pos.y - 50, 50,50);
+        
+    }
+    
     // arrow trajectory
-    // draw line from player to mouse pos
+    // draw line from player to arrow destination
     if (this.arrowPull) {
         ctx.strokeStyle = "#00894a";
-        ctx.moveTo(this.playerPos.x + 25, this.playerPos.y -25);
+        ctx.moveTo(this.player.pos.x + 25, this.player.pos.y -25);
         ctx.lineTo(this.mousePos.x, this.mousePos.y)
         ctx.stroke();
         
     }
     
+    // render arrow
+    if (this.arrow) {
+        ctx.fillStyle = "#ff8900";
+        ctx.fillRect(this.arrow.pos.x + this.viewport.x, this.arrow.pos.y, 25, 3);
+    }
     
     // UI: Health and Score
     
@@ -202,6 +232,25 @@ Engine.prototype.render = function() {
         ctx.textAlign = "center";
         ctx.fillText("Yes", dx + 100, dy + 180);
         ctx.fillText("No", dx + 300, dy + 180);
+    }
+    if (this.conversation) {
+        // render conversation
+        var blurb = this.conversation.text[this.conversation.i];
+        var tx, ty;
+        if (blurb.speaker == "player") {
+            tx = this.player.pos.x - 100;
+            ty = this.player.pos.y - 200;
+        } else {
+            
+        }
+        
+        ctx.fillStyle = "#b1ff00";
+        ctx.fillRect(tx + this.viewport.x, ty, 200, 75);
+        
+        ctx.fillStyle = "#000";
+        ctx.font = "10pt monospace";
+        wrapText(ctx, blurb.text, tx + 5 + this.viewport.x, ty + 15, 190, 12);
+        
     }
     
     // If game is not currently playing, display title screen
@@ -239,11 +288,31 @@ Engine.prototype.render = function() {
     }
 }
 
+Engine.prototype.physics = function(entity, elapsedTime) {   
+    var vel = entity.vel,
+        pos = entity.pos;
+    vel.y = vel.y + (this.gravity*entity.mass + elapsedTime/1000);
+    pos.y = pos.y + (vel.y * elapsedTime/1000)
+    
+    // collision detection to stop falling
+    // check the y tile below the player
+    var entityTile = {x: Math.floor((pos.x)/50), y:Math.floor(pos.y/50)}
+    if (level[entityTile.x][entityTile.y] != undefined) {
+        // reset position to top of tile and kill velocity
+        pos.y = (entityTile.y) * 50;
+        vel.y = 0;
+    }
+    entity.pos = pos;
+    entity.vel = vel;
+    return entity;
+}
+
 Engine.prototype.respawn = function() {
     // put viewport back half a screen
     // put player back as well
-    this.playerPos.y = 700;
-    this.viewport.x += 500;
+    this.player.pos.y = 700;
+    this.player.pos.x = Math.max(0, this.player.pos.x - 500);
+    this.viewport.x = Math.min(0, this.viewport.x + 500);
 }
 
 Engine.prototype.restartGame = function() {
@@ -259,8 +328,8 @@ Engine.prototype.keyPressed = function(e) {
     switch(e.keyCode) {
         case 39: this.moving = 'right'; break; // right
         case 32: // jump
-            if (this.playerVel.y == 0)
-                this.playerVel.y = -600;
+            if (this.player.vel.y == 0)
+                this.player.vel.y = -1000;
             break;
     }
     
@@ -269,7 +338,15 @@ Engine.prototype.keyReleased = function(e) {
     switch(e.keyCode) {
         case 39:
             this.moving = null;
-            break;          
+            break;
+        case 13:
+            // enter key - proceed in conversation
+            if (this.conversation) {
+                if (this.conversation.i < this.conversation.text.length)
+                    this.conversation.i ++;
+                if (this.conversation.i == this.conversation.text.length)
+                    this.conversation = null;
+            }
     }
 };
 
@@ -316,8 +393,8 @@ Engine.prototype.mouseUp = function(e) {
             case 3:
                 // right click -  release arrow
                 this.arrowPull = false;
-                if (this.arrow = null)
-                    this.arrow = {dest:this.mousePos, pos:{x:this.playerPos.x + 25, y: this.playerPos.y - 25}};
+                if (this.arrow == null)
+                    this.arrow = {dest:this.mousePos, pos:{x:this.player.pos.x + 25, y: this.player.pos.y - 25}};
                 break;
         }
 }
