@@ -5,3 +5,10 @@ events[7] = {
     type:"dialog",
     text:"This is a test dialog, with extremely long testy style text, so we can test text wrapping!"
 };
+
+events[12] = {
+    type:"conversation",
+    text:[{speaker: "player", text:"Test Conversation!"},{speaker: "player", text:"Still Testing!"}],
+    stopMovement: false,
+    autoplay: true
+}
