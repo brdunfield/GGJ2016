@@ -1,8 +1,9 @@
+var PLAYERLEFT = 425;
 var Engine = function(canvasID) {
     // This is required in order to have the proper context in the requestAnimationFrame below400
     var self = this;
     
-    this.debug = false;
+    this.debug = true;
     
     var canvas = document.getElementById(canvasID);
     canvas.width = window.innerWidth;
@@ -15,8 +16,7 @@ var Engine = function(canvasID) {
     
     // Game Variables
     this.viewport = {x:0,y:0};
-    
-    this.player = {pos: {x:300, y:700},
+    this.player = {pos: {x:PLAYERLEFT, y:700},
                  vel:{x:0,y:0},
                    speed: 200,
                  mass: 10}
@@ -90,15 +90,24 @@ Engine.prototype.animate = function(time) {
     }
     
     // Update entity positions.
-    
+    var playerTile = {x: Math.floor((this.player.pos.x-this.viewport.x)/50), y:Math.floor(this.player.pos.y/50)};
     // apply gravity to player
     this.player = this.physics(this.player, elapsedTime);
     
     // Update player position if there has been a key press
     // don't move if there's a dialog to deal with
     if (this.moving !== null && !this.dialog) {
-        this.player.pos.x += this.player.speed * (elapsedTime / 1000);
-        this.viewport.x -= this.player.speed * (elapsedTime / 1000);
+        // check if we would collide with a wall if we progressed
+        var testx = this.player.pos.x + this.player.speed * (elapsedTime / 1000) + 25;
+        var testTile = {x:Math.floor(testx/50), y: Math.floor(this.player.pos.y/50) - 1};
+        if (level[testTile.x][testTile.y] != undefined && level[testTile.x][testTile.y].hasOwnProperty("wall")){
+            console.log("hit a wall");// do nothing
+        } else {
+            this.player.pos.x += this.player.speed * (elapsedTime / 1000);
+            // move the viewport only if the player is far enough along
+            if (this.player.pos.x + this.viewport.x > PLAYERLEFT)
+                this.viewport.x -= this.player.speed * (elapsedTime / 1000);
+        }
     }
     
     // apply gravity to enemies and update
@@ -106,6 +115,26 @@ Engine.prototype.animate = function(time) {
         this.enemies[e] = this.physics(this.enemies[e], elapsedTime);
         
         this.enemies[e].update(this.player, elapsedTime);
+        
+        // check enemy attacks
+        if (this.enemies[e].attacking) {
+            if (this.enemies[e].ranged) {
+                
+            } else {
+                // melee attack
+                // check if player is within enemy attack range
+                var enemyTile = {x: Math.floor((this.enemies[e].pos.x-this.viewport.x)/50), y:Math.floor(this.enemies[e].pos.y/50)};
+                if (enemyTile.y == playerTile.y && Math.abs(enemyTile.x - playerTile.x) < 2) {
+                    console.log("Enemy attack hit");
+                    
+                    // knockback player if they are not at the left of hte screen
+                    var velx = (this.player.pos.x + this.viewport.x < 75) ? 0 : -200
+                    this.player.vel = {x:velx, y:-400};
+                }
+            }
+            this.enemies[e].attacking = false;
+
+        }
     }
     
     // if player has fallen off the screen, respawn
@@ -146,7 +175,6 @@ Engine.prototype.animate = function(time) {
     }
     
     // Check for any events at our x pos
-    var playerTile = {x: Math.floor((this.player.pos.x-this.viewport.x)/50), y:Math.floor(this.player.pos.y/50)}
     if (events[playerTile.x] != undefined && events[playerTile.x] != null) {
         var e = events[playerTile.x];
         if (e.type === "dialog") {
@@ -320,6 +348,9 @@ Engine.prototype.physics = function(entity, elapsedTime) {
     vel.y = vel.y + (this.gravity*entity.mass + elapsedTime/1000);
     pos.y = pos.y + (vel.y * elapsedTime/1000)
     
+    // apply any x vel
+    pos.x = pos.x + (vel.x * elapsedTime/1000)
+    
     // collision detection to stop falling
     // check the y tile below the player
     var entityTile = {x: Math.floor((pos.x)/50), y:Math.floor(pos.y/50)}
@@ -327,6 +358,15 @@ Engine.prototype.physics = function(entity, elapsedTime) {
         // reset position to top of tile and kill velocity
         pos.y = (entityTile.y) * 50;
         vel.y = 0;
+        
+        // if there is an x vel, kill it here
+        vel.x = 0;
+        
+        // if the tile does damage - take damage
+        // for now just respawn
+        if (level[entityTile.x][entityTile.y].hasOwnProperty("fatal")) {
+            this.respawn();
+        }
     }
     entity.pos = pos;
     entity.vel = vel;
@@ -338,7 +378,11 @@ Engine.prototype.respawn = function() {
     // put player back as well
     this.player.pos.y = 700;
     this.player.pos.x = Math.max(0, this.player.pos.x - 500);
-    this.viewport.x = Math.min(0, this.viewport.x + 500);
+    this.viewport.x = Math.min(0, this.viewport.x + 800);
+    // recenter the player on the viewport    
+    this.player.pos.x = Math.max(0, PLAYERLEFT - this.viewport.x);
+
+
 }
 
 Engine.prototype.restartGame = function() {
@@ -440,7 +484,8 @@ Engine.prototype.mouseUp = function(e) {
                 // right click -  release arrow
                 this.arrowPull = false;
                 if (this.arrow == null)
-                    this.arrow = {dest:this.mousePos, pos:{x:this.player.pos.x + 25, y: this.player.pos.y - 25}};
+                    var dest = {x:this.mousePos.x - this.viewport.x, y: this.mousePos.y};
+                    this.arrow = {dest:dest, pos:{x:this.player.pos.x + 25, y: this.player.pos.y - 25}};
                 break;
         }
 }
