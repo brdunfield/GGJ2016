@@ -2,7 +2,7 @@ var Engine = function(canvasID) {
     // This is required in order to have the proper context in the requestAnimationFrame below400
     var self = this;
     
-    this.debug = true;
+    this.debug = false;
     
     var canvas = document.getElementById(canvasID);
     canvas.width = window.innerWidth;
@@ -196,7 +196,12 @@ Engine.prototype.render = function() {
             if (level[x] != undefined)
                 if (level[x][y] != undefined) {
                     ctx.drawImage(this.images[level[x][y].asset], (x*50+this.viewport.x), y*50);
-                } 
+                    if(level[x][y].fillBelowTile != undefined) {
+                        for(var b=y+1; b < window.innerHeight/50; b++) {
+                            ctx.drawImage(this.images[level[x][y].fillBelowTile], (x*50+this.viewport.x), b*50);
+                        }
+                    }
+                }
         }
     }
     
@@ -456,6 +461,8 @@ Engine.prototype.initImageAssets = function() {
     var self = this;
     // Image Queue
     this.queueImage("assets/test.png", 'test');
+    this.queueImage("assets/grass.png", 'grass');
+    this.queueImage("assets/ground.png", 'ground');
     
     var loadingPercent = 0;
     var interval = setInterval(function(e) {
