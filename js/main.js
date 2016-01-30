@@ -19,7 +19,8 @@ var Engine = function(canvasID) {
     this.player = {pos: {x:PLAYERLEFT, y:700},
                  vel:{x:0,y:0},
                    speed: 200,
-                 mass: 10}
+                 mass: 10,
+                  player: true}
     this.arrowPull = false;
     
     this.mousePos = {x:0, y:0};
@@ -32,6 +33,13 @@ var Engine = function(canvasID) {
     this.enemies = [];
     this.enemies.push(new Enemy(17,14,"test"));
     
+    this.characters = [];
+    
+    // PLot variables
+    this.cutscene = false;
+    this.xButton = {x:25, y:25, falling: false, broken: false, vel:{x:-200,y:0}};
+    
+    
     /*
         ======================= Time based Motion Variables =======================
     */
@@ -42,6 +50,9 @@ var Engine = function(canvasID) {
     this.arrow = null;
     
     this.gravity = 2;
+    
+    this.messageSpeed = 4000; // autoplay messages will advance after 5s
+    this.lastMessage = 0;
     
     // Assets and asset loading variables
 	this.images = {};
@@ -83,14 +94,16 @@ Engine.prototype.animate = function(time) {
         ======================= Update =======================
     */
     
-    // remove expired enemies
+    // remove expired enemies, or offscreen enemies
     for (var e = this.enemies.length-1; e >= 0; e--) {
         if (this.enemies[e].hp == 0)
+            this.enemies.splice(e,1);
+        if (this.enemies[e].pos.x + this.viewport.x < -50) // offscreen enemies
             this.enemies.splice(e,1);
     }
     
     // Update entity positions.
-    var playerTile = {x: Math.floor((this.player.pos.x-this.viewport.x)/50), y:Math.floor(this.player.pos.y/50)};
+    var playerTile = {x: Math.floor(this.player.pos.x/50), y:Math.floor(this.player.pos.y/50)};
     // apply gravity to player
     this.player = this.physics(this.player, elapsedTime);
     
@@ -112,10 +125,11 @@ Engine.prototype.animate = function(time) {
     
     // apply gravity to enemies and update
     for (var e=0; e < this.enemies.length; e++) {
-        this.enemies[e] = this.physics(this.enemies[e], elapsedTime);
-        
-        this.enemies[e].update(this.player, elapsedTime);
-        
+        if (!this.cutscene) {
+            this.enemies[e] = this.physics(this.enemies[e], elapsedTime);
+
+            this.enemies[e].update(this.player, elapsedTime);
+        }
         // check enemy attacks
         if (this.enemies[e].attacking) {
             if (this.enemies[e].ranged) {
@@ -181,12 +195,47 @@ Engine.prototype.animate = function(time) {
             this.dialog = e;
         } else if (e.type === "conversation") {
             this.conversation = e;
-            // TODO - autoplay
+            this.lastMessage = time;
             this.conversation.i = 0;
+        } else if (e.type === "special") {
+            this.cutscene = true;
+            if (e.key ==="xbutton")
+                this.xButton.falling = true;
         }
         
         // remove the event
         events[playerTile.x] = null;
+    }
+    
+    // advance any conversations
+    if (this.conversation)
+        if (time - this.lastMessage > this.messageSpeed) {
+            this.lastMessage = time;
+            if (this.conversation.i < this.conversation.text.length)
+                this.conversation.i ++;
+            if (this.conversation.i == this.conversation.text.length)
+                this.conversation = null;
+        }
+    
+    /*
+        ============= CUTSCENE UPDATES ==============
+    */
+    // apply gravity to x button if falling
+    if (this.xButton.falling) {
+        this.xButton.vel.y = this.xButton.vel.y + (this.gravity*10 + elapsedTime/1000);
+        this.xButton.y = this.xButton.y + (this.xButton.vel.y * elapsedTime/1000);
+        this.xButton.x = this.xButton.x + (this.xButton.vel.x * elapsedTime/1000)
+        
+        if (this.xButton.x < 0)
+            this.xButton.vel.x *= -1;
+        
+        if (this.xButton.y > window.innerHeight - 50) {
+            this.xButton.vel.y = 0;
+            this.xButton.y = window.innerHeight - 50
+            this.xButton.falling = false;
+            this.xButton.broken = true;
+            this.cutscene = false;
+        }
     }
     
     // Calculate FPS
@@ -196,7 +245,7 @@ Engine.prototype.animate = function(time) {
     /*
         ======================= Render =======================
     */
-    this.render();
+    this.render(time);
     
     /*
         ======================= Call Next Frame =======================
@@ -206,7 +255,7 @@ Engine.prototype.animate = function(time) {
     });
 };
 
-Engine.prototype.render = function() {
+Engine.prototype.render = function(time) {
     var ctx = this.context;
     ctx.textAlign = "left";
     // Clear last frame's images
@@ -214,6 +263,12 @@ Engine.prototype.render = function() {
     
     // Draw images using loaded assets
     // Background
+    // TODO LOOP
+    ctx.drawImage(this.images["background_01"],this.viewport.x/5,0);
+    ctx.drawImage(this.images["background_02"],this.viewport.x/4,0);
+    ctx.drawImage(this.images["background_03"],this.viewport.x/3,0);
+    ctx.drawImage(this.images["background_04"],this.viewport.x/2,0);
+    ctx.drawImage(this.images["background_05"],this.viewport.x/1.2,0);
     
     // render level present in the viewport
     var startx = Math.floor(-this.viewport.x/50)
@@ -223,7 +278,10 @@ Engine.prototype.render = function() {
             //console.log("checking: " + x + ", " + y);
             if (level[x] != undefined)
                 if (level[x][y] != undefined) {
-                    ctx.drawImage(this.images[level[x][y].asset], (x*50+this.viewport.x), y*50);
+                    // draw the asset
+                    // if its a sprite, draw whichever part of it matches the global time counter divided by 1 second
+                    var numsprites = this.images[level[x][y].asset].width/50;
+                    ctx.drawImage(this.images[level[x][y].asset],(Math.floor(time/1000)%numsprites)*50, 0 , 50, 50, (x*50+this.viewport.x), y*50, 50, 50);
                     if(level[x][y].fillBelowTile != undefined) {
                         for(var b=y+1; b < window.innerHeight/50; b++) {
                             ctx.drawImage(this.images[level[x][y].fillBelowTile], (x*50+this.viewport.x), b*50);
@@ -234,9 +292,9 @@ Engine.prototype.render = function() {
     }
     
     // player
-    ctx.fillStyle = "#d800ff";
-    ctx.fillRect(this.player.pos.x + this.viewport.x - 25, this.player.pos.y-50, 50, 50);
-    ctx.fill();
+    var numsprites = (this.moving) ? 2 : 1;
+    ctx.drawImage(this.images["player"],((Math.floor(time/200))%numsprites)*50, (this.moving) ? 100 : 0, 50, 100, this.player.pos.x + this.viewport.x - 25,this.player.pos.y-100, 50, 100);
+    //ctx.drawImage(this.images["player"], this.player.pos.x + this.viewport.x - 25,this.player.pos.y-100);
     
     // enemies
     ctx.fillStyle = "#832300";
@@ -266,6 +324,10 @@ Engine.prototype.render = function() {
     }
     
     // UI: Health and Score
+    
+    // X button
+    ctx.drawImage(this.xButton.broken ? this.images["xbroken"] : this.images["x"], this.xButton.x, this.xButton.y);
+    
     
     if (this.dialog) {
         // render dialog box
@@ -364,7 +426,7 @@ Engine.prototype.physics = function(entity, elapsedTime) {
         
         // if the tile does damage - take damage
         // for now just respawn
-        if (level[entityTile.x][entityTile.y].hasOwnProperty("fatal")) {
+        if (entity.hasOwnProperty("player") && level[entityTile.x][entityTile.y].hasOwnProperty("fatal")) {
             this.respawn();
         }
     }
@@ -395,18 +457,22 @@ Engine.prototype.restartGame = function() {
 
 Engine.prototype.keyPressed = function(e) {
     // Figure out which key was pressed
-    switch(e.keyCode) {
-        case 39: this.moving = 'right'; break; // right
-        case 32: // jump
-            if (this.player.vel.y == 0)
-                this.player.vel.y = -650;
-            break;
-    }
+    if (!this.cutscene)
+        switch(e.keyCode) {
+            case 39: 
+            case 68:
+                this.moving = 'right'; break; // right
+            case 32: // jump
+                if (this.player.vel.y == 0)
+                    this.player.vel.y = -650;
+                break;
+        }
     
 };
 Engine.prototype.keyReleased = function(e) {
     switch(e.keyCode) {
-        case 39:
+        case 39: 
+        case 68:
             this.moving = null;
             break;
         case 13:
@@ -423,54 +489,56 @@ Engine.prototype.keyReleased = function(e) {
 Engine.prototype.mouseDown = function(e) {
     e.preventDefault();
     e.stopPropagation();
-    switch(e.which) {
-        case 1:
-            // left click - attack
-            // if dialog, check for button click
-            if (this.dialog) {
-                var dx = (window.innerWidth/2) - 200,
-                    dy = (window.innerHeight/2) - 100;
+    
+    if (!this.cutscene)
+        switch(e.which) {
+            case 1:
+                // left click - attack
+                // if dialog, check for button click
+                if (this.dialog) {
+                    var dx = (window.innerWidth/2) - 200,
+                        dy = (window.innerHeight/2) - 100;
 
-                if (e.clientY > dy + 160 && e.clientY < dy + 185) {
-                    if (e.clientX > dx + 50 && e.clientX < dx + 150) {
-                        // yes
-                        console.log("dialog yes");
-                        this.dialog = null;
-                    } else if (e.clientX > dx + 250 && e.clientX < dx + 350) {
-                        // no
-                        console.log("dialog no");
-                        this.dialog = null;
-                    }
-                }
-            } else {
-                // attack
-                // TODO - animation
-                
-                // check the 4 tiles in front of the player
-                // player tile.x + 1 and +2
-                // player tile.y -0 -1
-                var playerTile = {x:Math.floor(this.player.pos.x/50),y:Math.floor(this.player.pos.y/50)}
-                for (var e=0; e < this.enemies.length; e++) {
-                    // compare against those 4 tiles
-                    var enemyTile = {x:Math.floor(this.enemies[e].pos.x/50),y:Math.floor(this.enemies[e].pos.y/50)};
-                    if (enemyTile.y == playerTile.y || enemyTile.y == playerTile.y - 1) {
-                        if (enemyTile.x == playerTile.x + 1 || enemyTile.x == playerTile.x + 2) {
-                            console.log("Enemy hit by sword!");
-                            this.enemies[e].hp --;
+                    if (e.clientY > dy + 160 && e.clientY < dy + 185) {
+                        if (e.clientX > dx + 50 && e.clientX < dx + 150) {
+                            // yes
+                            console.log("dialog yes");
+                            this.dialog = null;
+                        } else if (e.clientX > dx + 250 && e.clientX < dx + 350) {
+                            // no
+                            console.log("dialog no");
+                            this.dialog = null;
                         }
                     }
-                    
+                } else {
+                    // attack
+                    // TODO - animation
+
+                    // check the 4 tiles in front of the player
+                    // player tile.x + 1 and +2
+                    // player tile.y -0 -1
+                    var playerTile = {x:Math.floor(this.player.pos.x/50),y:Math.floor(this.player.pos.y/50)}
+                    for (var e=0; e < this.enemies.length; e++) {
+                        // compare against those 4 tiles
+                        var enemyTile = {x:Math.floor(this.enemies[e].pos.x/50),y:Math.floor(this.enemies[e].pos.y/50)};
+                        if (enemyTile.y == playerTile.y || enemyTile.y == playerTile.y - 1) {
+                            if (enemyTile.x == playerTile.x + 1 || enemyTile.x == playerTile.x + 2) {
+                                console.log("Enemy hit by sword!");
+                                this.enemies[e].hp --;
+                            }
+                        }
+
+                    }
+
                 }
-                
-            }
-            break;
-        case 3:
-            // right click
-            if (!this.dialog) {
-                this.arrowPull = true;
                 break;
-            }
-    }
+            case 3:
+                // right click
+                if (!this.dialog) {
+                    this.arrowPull = true;
+                    break;
+                }
+        }
 }
 Engine.prototype.mouseUp = function(e) {
     e.preventDefault();
@@ -483,9 +551,10 @@ Engine.prototype.mouseUp = function(e) {
             case 3:
                 // right click -  release arrow
                 this.arrowPull = false;
-                if (this.arrow == null)
+                if (this.arrow == null) {
                     var dest = {x:this.mousePos.x - this.viewport.x, y: this.mousePos.y};
                     this.arrow = {dest:dest, pos:{x:this.player.pos.x + 25, y: this.player.pos.y - 25}};
+                }
                 break;
         }
 }
@@ -505,9 +574,22 @@ Engine.prototype.initImageAssets = function() {
     
     var self = this;
     // Image Queue
+    this.queueImage("assets/x.png","x");
+    this.queueImage("assets/xbroken.png","xbroken");
     this.queueImage("assets/test.png", 'test');
     this.queueImage("assets/grass.png", 'grass');
     this.queueImage("assets/ground.png", 'ground');
+    this.queueImage("assets/lava_sprite.png","lava");
+    
+    // backgrounds
+    this.queueImage("assets/background_01.png","background_05");
+    this.queueImage("assets/background_02.png","background_04");
+    this.queueImage("assets/background_03.png","background_03");
+    this.queueImage("assets/background_04.png","background_02");
+    this.queueImage("assets/background_05.png","background_01");
+    
+    // characters
+    this.queueImage("assets/Hero.png", 'player');
     
     var loadingPercent = 0;
     var interval = setInterval(function(e) {
@@ -521,6 +603,7 @@ Engine.prototype.initImageAssets = function() {
             //document.getElementById('loadingBar').style.opacity = 0; // hide bar
             // Start the game loop
             window.requestAnimationFrame(function (time) {
+                console.log("Game START");
                 self.animate.call(self, time);
             });
         }

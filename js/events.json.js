@@ -12,3 +12,9 @@ events[12] = {
     stopMovement: false,
     autoplay: true
 }
+
+
+events[22] = {
+    type:"special",
+    key:"xbutton"
+}

@@ -17,3 +17,29 @@ for (var x = 11; x < 14; x++) {
         asset: "grass"
     };
 }
+
+// wall test
+level[20][16] = {
+    asset:"grass",
+    wall:"true"
+}
+level[20][15] = {
+    asset:"grass",
+    wall:"true"
+}
+level[20][14] = {
+    asset:"grass",
+    wall:"true"
+}
+
+// lava test
+level[25][17] = {
+    asset:"lava",
+    fillBelowTile:"lava",
+    fatal:true
+}
+level[26][17] = {
+    asset:"lava",
+    fillBelowTile:"lava",
+    fatal:true
+}
