@@ -37,7 +37,7 @@ var Engine = function(canvasID) {
 //    this.enemies.push(new Enemy(17,10,"ranged"));
     
     this.characters = [];
-    this.characters.push(new Character(4, 10, "princess", 30, 5))
+    this.characters.push(new Character(15, 10, "randy", 200, 5))
     
     // PLot variables
     this.cutscene = false;
@@ -100,7 +100,7 @@ Engine.prototype.animate = function(time) {
     
     // remove expired enemies, or offscreen enemies
     for (var e = this.enemies.length-1; e >= 0; e--) {
-        if (this.enemies[e].hp == 0)
+        if (this.enemies[e].hp == 0 && this.enemies[e].vel.y == 0)
             this.enemies.splice(e,1);
         else if (this.enemies[e].pos.x + this.viewport.x < -50) // offscreen enemies
             this.enemies.splice(e,1);
@@ -151,14 +151,14 @@ Engine.prototype.animate = function(time) {
             } else {
                 // melee attack
                 // check if player is within enemy attack range
-                var enemyTile = {x: Math.floor((this.enemies[e].pos.x-this.viewport.x)/50), y:Math.floor(this.enemies[e].pos.y/50)};
-                if (enemyTile.y == playerTile.y && Math.abs(enemyTile.x - playerTile.x) < 2) {
+                var enemyTile = {x: Math.floor(this.enemies[e].pos.x/50), y:Math.floor(this.enemies[e].pos.y/50)};
+                if (enemyTile.y == playerTile.y && Math.abs(enemyTile.x - playerTile.x) < 2 && this.player.vel.x == 0) {
                     console.log("Enemy attack hit");
                     
                     this.knockback();
+                    this.enemies[e].attacking = false;
                 }
             }
-            this.enemies[e].attacking = false;
 
         }
     }
@@ -166,7 +166,7 @@ Engine.prototype.animate = function(time) {
     // Update characters
     for (var c=0; c < this.characters.length; c++) {
         this.physics(this.characters[c], elapsedTime);
-        this.characters[c].update();
+        this.characters[c].update(this.player, elapsedTime);
     }
 
     // if player has fallen off the screen, respawn
@@ -182,13 +182,19 @@ Engine.prototype.animate = function(time) {
         // check arrow collision
         // get arrow tile and compare
         var arrowTile = {x:Math.floor(arrow.pos.x/50), y:Math.floor(arrow.pos.y/50)};
-        if (level[arrowTile.x][arrowTile.y] != undefined && !level[arrowTile.x][arrowTile.y].hasOwnProperty("noCollide")) {
+        if (arrow.owner == "plot") {
+            // cutscene stuff
+            if (arrow.dist < 10) {
+                this.xButton.falling = true;
+                this.arrows.splice(a, 1);
+                this.conversation = events[-5];
+                this.conversation.i = 0;
+            }
+        } else if (level[arrowTile.x][arrowTile.y] != undefined && !level[arrowTile.x][arrowTile.y].hasOwnProperty("noCollide")) {
             // we hit a tile - arrow dies
             this.arrows.splice(a, 1);
-        } else if (arrow.dist < 6) {
-            // if a plot arrow, do stuff here
-
-            this.arrows.splice(a, 1);
+        } else if (arrow.dist < 10){
+            this.arrows.splice(a,1);
         } else {
             // check collisions
             if (arrow.owner == "player") {
@@ -196,7 +202,7 @@ Engine.prototype.animate = function(time) {
                     var eTile = {x: Math.floor(this.enemies[e].pos.x/50), y: Math.floor(this.enemies[e].pos.y/50)};
                     if (arrowTile.x == eTile.x && (arrowTile.y == eTile.y - 1 || arrowTile.y == eTile.y - 2)) { // arrows are -1 in y from the rest of entities because they are not a full tile
                         // enemy takes damage and arrow dies
-                        this.enemies[e].hp --;
+                        this.enemies[e].takeDamage();
                         this.arrows.splice(a, 1);
                         break;
                     }
@@ -225,11 +231,7 @@ Engine.prototype.animate = function(time) {
             this.enemies.push(new Enemy(e.x, e.y, e.enemyType));
         } else if (e.type === "special") {
             this.cutscene = true;
-            if (e.key ==="xbutton") {
-                // create a special "plot arrow" that attacks the x button. When it connects, x button falls
-
-            }
-                this.xButton.falling = true;
+            this.player.moving = null;
         }
         
         // remove the event
@@ -242,13 +244,33 @@ Engine.prototype.animate = function(time) {
             this.lastMessage = time;
             if (this.conversation.i < this.conversation.text.length)
                 this.conversation.i ++;
-            if (this.conversation.i == this.conversation.text.length)
-                this.conversation = null;
+            if (this.conversation.i == this.conversation.text.length) {
+                if (this.conversation.hasOwnProperty("special")) {
+                    // create a special "plot arrow" that attacks the x button. When it connects, x button falls
+                    this.arrows.push(new Arrow({x:this.player.pos.x - 25, y:this.player.pos.y - 75}, {x:100 - this.viewport.x, y:100}, "plot"));
+
+                    this.conversation = null;
+                } else
+                    this.conversation = null;
+            }
+
         }
     
     /*
         ============= CUTSCENE UPDATES ==============
     */
+
+    // check if mouse is near xbutton before it is broken
+    if (!this.xButton.broken)
+        if (Math.abs(this.mousePos.x - 100) < 100 && Math.abs(this.mousePos.y - 100) < 100) {
+            this.cutscene = true;
+            this.player.moving = null;
+
+            this.conversation = events[-4];
+            this.conversation.i = 0;
+            this.lastMessage = time;
+        }
+
     // apply gravity to x button if falling
     if (this.xButton.falling) {
         this.xButton.vel.y = this.xButton.vel.y + (this.gravity*10*elapsedTime/1000);
@@ -293,12 +315,12 @@ Engine.prototype.render = function(time) {
     // Draw images using loaded assets
     // Background
     // TODO LOOP
-    ctx.drawImage(this.images["background_01"],this.viewport.x/5,0);
-    ctx.drawImage(this.images["background_02"],this.viewport.x/4,0);
-    ctx.drawImage(this.images["background_03"],this.viewport.x/3,0);
-    //ctx.drawImage(this.images["background_04"],this.viewport.x/2,0);
-    ctx.drawImage(this.images["background_05"],this.viewport.x/1.2,0);
-    
+    ctx.drawImage(this.images["background_01"],(-this.viewport.x/5)%this.images["background_01"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
+    ctx.drawImage(this.images["background_02"],(-this.viewport.x/4)%this.images["background_02"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
+    ctx.drawImage(this.images["background_03"],(-this.viewport.x/3)%this.images["background_03"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
+    ctx.drawImage(this.images["background_04"],(-this.viewport.x/2)%this.images["background_04"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
+    ctx.drawImage(this.images["background_05"],(-this.viewport.x/1.2)%this.images["background_05"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
+
     // render level present in the viewport
     var startx = Math.floor(-this.viewport.x/50)
     for (var x=startx; x < (window.innerWidth/50) + startx + 1; x++) {     
@@ -321,23 +343,23 @@ Engine.prototype.render = function(time) {
     }
     
     // player
-    var numsprites = (this.player.moving && !this.player.attacking && !this.player.jumping ) ? 2 : 1;
-    ctx.drawImage(this.images["player"],((Math.floor(time/200))%numsprites)*50, (this.player.attacking != null) ? 300 : (this.player.jumping) ? 200 : (this.player.moving ) ? 100 : 0, 50, 100, this.player.pos.x + this.viewport.x - 25,this.player.pos.y-100, 50, 100);
+    var numsprites = (this.player.vel.x != 0 || (this.player.moving && !this.player.attacking && !this.player.jumping) ) ? 2 : 1;
+    ctx.drawImage(this.images["player"],((Math.floor(time/200))%numsprites)*50, (this.player.vel.x != 0) ? 500 : (this.player.attacking != null) ? 300 : (this.player.jumping) ? 200 : (this.player.moving ) ? 100 : 0, 50, 100, this.player.pos.x + this.viewport.x - 25,this.player.pos.y-100, 50, 100);
     if (this.player.attacking != null)
         ctx.drawImage(this.images["playerAttack"], this.player.pos.x + this.viewport.x + 25,this.player.pos.y-100)
     
     // enemies
     for (var e=0; e< this.enemies.length; e++) {
-        // for now just render a red square
         var enemy = this.enemies[e];
-        ctx.drawImage(this.images["enemy"], enemy.pos.x + this.viewport.x, enemy.pos.y - 100);
-        
+        numsprites = (enemy.vel.x != 0 || (enemy.moving && !enemy.attacking && !enemy.jumping)) ? 2 : 1;
+        ctx.drawImage(this.images['enemy'],((Math.floor(time/200))%numsprites)*50, (enemy.vel.x != 0) ? 500: (enemy.attacking == true) ? 300 : (enemy.jumping) ? 200 : (enemy.moving ) ? 100 : 0, 50, 100, enemy.pos.x + this.viewport.x - 25,enemy.pos.y-100, 50, 100);
     }
     
     // NPC characters
     for (var c=0; c < this.characters.length; c++) {
         var char = this.characters[c];
-        ctx.drawImage(this.images[char.name],char.pos.x + this.viewport.x, char.pos.y - 100 );
+        numsprites = (char.moving && !char.attacking && !char.jumping ) ? 2 : 1;
+        ctx.drawImage(this.images[char.name],((Math.floor(time/200))%numsprites)*50, (char.attacking != false) ? 300 : (char.jumping) ? 200 : (char.moving ) ? 100 : 0, 50, 100, char.pos.x + this.viewport.x - 25,char.pos.y-100, 50, 100);
     }
 
     // arrow trajectory
@@ -355,7 +377,11 @@ Engine.prototype.render = function(time) {
     // render arrow
     ctx.fillStyle = "#ff8900";
     for (var a=0; a < this.arrows.length; a++) {
-        ctx.fillRect(this.arrows[a].pos.x + this.viewport.x, this.arrows[a].pos.y, 25, 3);
+        ctx.save();
+        ctx.translate(this.arrows[a].pos.x + this.viewport.x, this.arrows[a].pos.y)
+        ctx.rotate(this.arrows[a].rotate);
+        ctx.drawImage((this.arrows[a].owner == "enemy") ? this.images["enemyarrow"] : this.images["arrow"],0, 0 );
+        ctx.restore();
     }
     
     // UI: Health and Score
@@ -530,6 +556,7 @@ Engine.prototype.keyReleased = function(e) {
         case 68:
             this.player.moving = null;
             break;
+            /*
         case 13:
             // enter key - proceed in conversation
             if (this.conversation) {
@@ -537,7 +564,7 @@ Engine.prototype.keyReleased = function(e) {
                     this.conversation.i ++;
                 if (this.conversation.i == this.conversation.text.length)
                     this.conversation = null;
-            }
+            }*/
     }
 };
 
@@ -580,7 +607,8 @@ Engine.prototype.mouseDown = function(e) {
                         if (enemyTile.y == playerTile.y || enemyTile.y == playerTile.y - 1) {
                             if (enemyTile.x == playerTile.x + 1 || enemyTile.x == playerTile.x + 2) {
                                 console.log("Enemy hit by sword!");
-                                this.enemies[e].hp --;
+                                this.enemies[e].takeDamage();
+
                             }
                         }
 
@@ -659,9 +687,15 @@ Engine.prototype.initImageAssets = function() {
     this.queueImage("assets/Hero.png", 'player');
     this.queueImage("assets/sword.png", 'playerAttack');
     
-    this.queueImage("assets/Randy.png", 'enemy');
+    this.queueImage("assets/Randy.png", 'randy');
     this.queueImage("assets/Princess.png", 'princess');
     
+    this.queueImage("assets/Monster.png", 'enemy');
+
+    // other
+    this.queueImage("assets/Arrow.png", 'arrow');
+    this.queueImage("assets/Fireball.png", 'enemyarrow');
+
     var loadingPercent = 0;
     var interval = setInterval(function(e) {
         // continually load images and check on our progress

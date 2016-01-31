@@ -1,30 +1,12 @@
 // index of event is the x tile to trigger it
 // TODO - make more 2D
 var events = [];
-
-//events[7] = {
-//    type: "dialog",
-//    text: "test"
-//};
-
-//events[12] = {
-//    type: "conversation",
-//    text: [{
-//        speaker: "princess",
-//        text: "Test Conversation!"
-//    }, {
-//        speaker: "player",
-//        text: "Still Testing!"
-//    }],
-//    stopMovement: false,
-//    autoplay: true
-//}
-
-
-//events[22] = {
-//    type: "special",
-//    key: "xbutton"
-//}
+events[-4] = {
+    text:[{speaker: "player", text:"What are you doing? Don't click that!"}],
+    special: "plotArrow"
+}
+events[-5] = {
+    text:[{speaker: "player", text:"This isn't over yet."},{speaker: "player", text:"..."},{speaker: "player", text:"Look over there! More levels to go through!"}],
 
 // AREA 1 ------------------------------------------
 {

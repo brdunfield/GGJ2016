@@ -18,6 +18,9 @@ var Enemy = function(x, y, type) {
         this.shootFrequency = Math.random()*5000 + 3000;
         this.lastShot = 0;
     }
+
+    this.moving = false;
+    this.jumping = false;
 }
 Enemy.prototype.update = function(player, elapsedtime, time){
     // different AI
@@ -32,6 +35,7 @@ Enemy.prototype.update = function(player, elapsedtime, time){
     if (this.type == "test") {
         var dist = this.pos.x - player.pos.x;
         // add the amount we can move at speed
+        this.moving = true;
         this.pos.x += (-dist/Math.abs(dist) * this.speed*elapsedtime/1000);
         
         // TODO - check against walls
@@ -46,18 +50,30 @@ Enemy.prototype.update = function(player, elapsedtime, time){
             if (Math.abs(enemyTile.x - playerTile.x) <= 2) {
                 console.log("Enemy attacks with a sword!");
                 this.attacking = true;
+            } else {
+                this.attacking = false;
             }
         }
     } else if (this.type == "ranged") {
         if (time - this.lastShot > this.shootFrequency) {
             // fire arrow at player
+            this.attacking = true;
             this.lastShot = time;
             console.log("Firing Arrow!");
             this.arrow = new Arrow({x:this.pos.x,y:this.pos.y - 75}, {x:player.pos.x, y:player.pos.y -50}, "enemy");
         }
+        if (time - this.lastShot > 200 && this.attacking)
+            this.attacking = false;
     }
     
     
+}
+
+Enemy.prototype.takeDamage = function() {
+    if (this.vel.x === 0) {
+        this.hp --;
+        this.vel = {x:200, y:-400};
+    }
 }
 
 Enemy.prototype.die = function(elapsedtime) {
