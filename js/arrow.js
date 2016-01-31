@@ -5,6 +5,8 @@ var Arrow = function(source, dest, owner) {
     this.owner = owner;
     this.speed = 600;
     this.dist = 100;
+    
+    this.rotate = Math.atan2(this.dest.y - this.pos.y, this.dest.x - this.pos.x)
 }
 
 Arrow.prototype.update = function(elapsedTime) {
