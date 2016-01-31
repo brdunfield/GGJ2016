@@ -5,6 +5,7 @@ var Enemy = function(x, y, type) {
     this.speed = 50;
     this.mass = 15;
     this.attacking = false;
+    this.arrow = null;
     
     if (type == "test") {
         this.hp = 1;
@@ -14,7 +15,6 @@ var Enemy = function(x, y, type) {
     if (type =="ranged") {
         this.hp = 1;
         this.ranged = true;
-        this.arrow = null;
         this.shootFrequency = Math.random()*5000 + 3000;
         this.lastShot = 0;
     }
@@ -52,7 +52,8 @@ Enemy.prototype.update = function(player, elapsedtime, time){
         if (time - this.lastShot > this.shootFrequency) {
             // fire arrow at player
             this.lastShot = time;
-            console.log("Firing Arrow!")
+            console.log("Firing Arrow!");
+            this.arrow = new Arrow({x:this.pos.x,y:this.pos.y - 75}, {x:player.pos.x, y:player.pos.y -50}, "enemy");
         }
     }
     
