@@ -47,6 +47,8 @@ var Engine = function(canvasID) {
     this.xButton = {x:25, y:25, falling: false, broken: false, vel:{x:-200,y:0}};
     this.xButtonBreak = false;
     this.lnstimer = null;
+    
+    this.credits = false;
     /*
         ======================= Time based Motion Variables =======================
     */
@@ -204,6 +206,7 @@ Engine.prototype.animate = function(time) {
                     noCollide: true
                 }
             }
+            this.credits = true;
         }
     }
 
@@ -449,6 +452,10 @@ Engine.prototype.render = function(time) {
     // X button
     ctx.drawImage(this.images["x"], 0, (this.xButton.broken) ? 100 : 0, 50,50, this.xButton.x, this.xButton.y, 50, 50);
     
+    // credits
+    if (this.credits) {
+        
+    }
     
     if (this.dialog) {
         // render dialog box
@@ -773,6 +780,8 @@ Engine.prototype.initImageAssets = function() {
     // other
     this.queueImage("assets/Arrow.png", 'arrow');
     this.queueImage("assets/Fireball.png", 'enemyarrow');
+    
+    this.queueImage("assets/Credits.png",'credits1');
 
     var loadingPercent = 0;
     var interval = setInterval(function(e) {
