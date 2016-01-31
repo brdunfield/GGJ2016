@@ -18,7 +18,7 @@ var Engine = function(canvasID) {
     this.viewport = {x:0,y:0};
     this.player = {pos: {x:PLAYERLEFT, y:700},
                   vel:{x:0,y:0},
-                  speed: 200,
+                  speed: 300,
                   mass: 10,
                   player: true,
                   moving: null,
@@ -37,13 +37,16 @@ var Engine = function(canvasID) {
 //    this.enemies.push(new Enemy(17,10,"ranged"));
     
     this.characters = [];
-    this.characters.push(new Character(15, 10, "randy", 200, 5))
+    this.characters.push(new Character(15, 10, "randy", 200, 5));
+    var princess = new Character(castleStart + 100, 12,"princess", 150, 8);
+    princess.following = false;
+    this.characters.push(princess);
     
     // PLot variables
     this.cutscene = false;
     this.xButton = {x:25, y:25, falling: false, broken: false, vel:{x:-200,y:0}};
-    
-    
+    this.xButtonBreak = false;
+    this.lnstimer = null;
     /*
         ======================= Time based Motion Variables =======================
     */
@@ -55,7 +58,7 @@ var Engine = function(canvasID) {
     
     this.gravity = 100;
     
-    this.messageSpeed = 4000; // autoplay messages will advance after 5s
+    this.messageSpeed = 3000; // autoplay messages will advance after 5s
     this.lastMessage = 0;
     
     // Assets and asset loading variables
@@ -93,15 +96,28 @@ Engine.prototype.animate = function(time) {
     // Time based motion - determine how long it has been since the last frame
     // This will be in milliseconds
     var elapsedTime = time - this.lastTime;
-    
+    if (this.lnstimer != null)
+        this.lnstimer += elapsedTime;
     /*
         ======================= Update =======================
     */
-    
+    var lns = null;
+    for (var c=0; c < this.characters.length; c++) {
+        if (this.characters[c].name == "lns") {
+            lns = this.characters[c];
+        }
+    }
     // remove expired enemies, or offscreen enemies
     for (var e = this.enemies.length-1; e >= 0; e--) {
-        if (this.enemies[e].hp == 0 && this.enemies[e].vel.y == 0)
+        if (this.enemies[e].hp == 0 && this.enemies[e].vel.y == 0) {
             this.enemies.splice(e,1);
+            // if LNS is spawned, do a hurt animation
+            if (lns != null) {
+                lns.vel = {x:1, y:-200};
+                lns.hp --;
+                console.log("lns hp: " + lns.hp);
+            }
+        }
         else if (this.enemies[e].pos.x + this.viewport.x < -50) // offscreen enemies
             this.enemies.splice(e,1);
     }
@@ -164,9 +180,31 @@ Engine.prototype.animate = function(time) {
     }
     
     // Update characters
-    for (var c=0; c < this.characters.length; c++) {
+    for (var c=this.characters.length - 1; c >= 0; c--) {
         this.physics(this.characters[c], elapsedTime);
         this.characters[c].update(this.player, elapsedTime);
+
+        if (this.lnstimer >= 1000 && this.characters[c].name == "lns") {
+            this.cutscene = false;
+            this.characters[c].attacking = false;
+        }
+        if (this.characters[c].name == "lns" && this.characters[c].hp <= 0 && this.characters[c].vel.x == 0) {
+            this.characters.splice(c,1);
+            // cutscene
+            this.cutscene = true;
+            this.xButtonBreak = true;
+            this.conversation = events[-10];
+            this.conversation.i = 0;
+            this.lastMessage = time;
+
+            // add fireworks
+            for (var x = castleStart + 85; x < castleStart + 113; x+= 2) {
+                level[castleStart + x][6] = {
+                    asset:"fireworks",
+                    noCollide: true
+                }
+            }
+        }
     }
 
     // if player has fallen off the screen, respawn
@@ -206,6 +244,7 @@ Engine.prototype.animate = function(time) {
                         this.arrows.splice(a, 1);
                         break;
                     }
+
                 }
             } else if (arrow.owner == "enemy") {
                 if (arrowTile.x == playerTile.x && (arrowTile.y == playerTile.y - 1 || arrowTile.y == playerTile.y - 2)) { // arrows are -1 in y from the rest of entities because they are not a full tile
@@ -227,11 +266,30 @@ Engine.prototype.animate = function(time) {
             this.conversation = e;
             this.lastMessage = time;
             this.conversation.i = 0;
+            if (e.hasOwnProperty("cutscene")) {
+                this.cutscene = true;
+                this.player.moving = null;
+            }
         } else if (e.type === "enemySpawn") {
             this.enemies.push(new Enemy(e.x, e.y, e.enemyType));
         } else if (e.type === "special") {
-            this.cutscene = true;
-            this.player.moving = null;
+            if (e.key == "spawnlns") {
+                this.characters.push(new Character(castleStart + 95, 12,"lns", 200, 15));
+            } else if (e.key == "lnsfight") {
+                this.cutscene = true;
+                this.player.moving = null;
+                for (var c=0; c < this.characters.length; c++) {
+                    if (this.characters[c].name == "lns") {
+                        this.characters[c].attacking = true;
+                    }
+                }
+                // spawn his army of enemies
+                this.enemies.push(new Enemy(castleStart + 80, 13, "melee"));
+                this.enemies.push(new Enemy(castleStart + 83, 12, "melee"));
+                this.enemies.push(new Enemy(castleStart + 87, 11, "ranged"));
+                this.enemies.push(new Enemy(castleStart + 90, 10, "ranged"));
+                this.lnstimer = 0;
+            }
         }
         
         // remove the event
@@ -250,8 +308,11 @@ Engine.prototype.animate = function(time) {
                     this.arrows.push(new Arrow({x:this.player.pos.x - 25, y:this.player.pos.y - 75}, {x:100 - this.viewport.x, y:100}, "plot"));
 
                     this.conversation = null;
-                } else
+                } else {
+                    if (this.conversation.hasOwnProperty("cutscene"))
+                        this.cutscene = false;
                     this.conversation = null;
+                }
             }
 
         }
@@ -261,7 +322,7 @@ Engine.prototype.animate = function(time) {
     */
 
     // check if mouse is near xbutton before it is broken
-    if (!this.xButton.broken)
+    if (!this.xButton.broken && this.xButtonBreak)
         if (Math.abs(this.mousePos.x - 100) < 100 && Math.abs(this.mousePos.y - 100) < 100) {
             this.cutscene = true;
             this.player.moving = null;
@@ -317,9 +378,6 @@ Engine.prototype.render = function(time) {
     // TODO LOOP
     ctx.drawImage(this.images["background_01"],(-this.viewport.x/5)%this.images["background_01"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
     ctx.drawImage(this.images["background_02"],(-this.viewport.x/4)%this.images["background_02"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
-    ctx.drawImage(this.images["background_03"],(-this.viewport.x/3)%this.images["background_03"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
-    ctx.drawImage(this.images["background_04"],(-this.viewport.x/2)%this.images["background_04"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
-    ctx.drawImage(this.images["background_05"],(-this.viewport.x/1.2)%this.images["background_05"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
 
     // render level present in the viewport
     var startx = Math.floor(-this.viewport.x/50)
@@ -352,14 +410,16 @@ Engine.prototype.render = function(time) {
     for (var e=0; e< this.enemies.length; e++) {
         var enemy = this.enemies[e];
         numsprites = (enemy.vel.x != 0 || (enemy.moving && !enemy.attacking && !enemy.jumping)) ? 2 : 1;
-        ctx.drawImage(this.images['enemy'],((Math.floor(time/200))%numsprites)*50, (enemy.vel.x != 0) ? 500: (enemy.attacking == true) ? 300 : (enemy.jumping) ? 200 : (enemy.moving ) ? 100 : 0, 50, 100, enemy.pos.x + this.viewport.x - 25,enemy.pos.y-100, 50, 100);
+        ctx.drawImage((enemy.ranged) ? this.images['enemy']: this.images['enemy2'],((Math.floor(time/200))%numsprites)*50, (enemy.vel.x != 0) ? 500: (enemy.attacking == true) ? 300 : (enemy.jumping) ? 200 : (enemy.moving ) ? 100 : 0, 50, 100, enemy.pos.x + this.viewport.x - 25,enemy.pos.y-100, 50, 100);
     }
     
     // NPC characters
     for (var c=0; c < this.characters.length; c++) {
         var char = this.characters[c];
         numsprites = (char.moving && !char.attacking && !char.jumping ) ? 2 : 1;
-        ctx.drawImage(this.images[char.name],((Math.floor(time/200))%numsprites)*50, (char.attacking != false) ? 300 : (char.jumping) ? 200 : (char.moving ) ? 100 : 0, 50, 100, char.pos.x + this.viewport.x - 25,char.pos.y-100, 50, 100);
+        ctx.drawImage(this.images[char.name],((Math.floor(time/200))%numsprites)*50, (char.vel.x != 0) ? 500 : (char.attacking != false) ? 300 : (char.jumping) ? 200 : (char.moving ) ? 100 : 0, 50, 100, char.pos.x + this.viewport.x - 25,char.pos.y-100, 50, 100);
+        if (char.name == "lns" && char.attacking)
+            ctx.drawImage(this.images["lnsAttack"], char.pos.x + this.viewport.x + 25,char.pos.y-100)
     }
 
     // arrow trajectory
@@ -387,7 +447,7 @@ Engine.prototype.render = function(time) {
     // UI: Health and Score
     
     // X button
-    ctx.drawImage(this.xButton.broken ? this.images["xbroken"] : this.images["x"], this.xButton.x, this.xButton.y);
+    ctx.drawImage(this.images["x"], 0, (this.xButton.broken) ? 100 : 0, 50,50, this.xButton.x, this.xButton.y, 50, 50);
     
     
     if (this.dialog) {
@@ -472,13 +532,13 @@ Engine.prototype.render = function(time) {
 
 Engine.prototype.physics = function(entity, elapsedTime) {
     // straight up skip physics if elapsed time is comically large
-    if (elapsedTime > 500)
+    if (elapsedTime > 100)
         return entity;
 
     var vel = entity.vel,
         pos = entity.pos;
     vel.y = vel.y + (this.gravity*entity.mass*elapsedTime/1000);
-    pos.y = pos.y + (vel.y * elapsedTime/1000)
+    pos.y = pos.y + Math.min(vel.y * elapsedTime/1000, 50)
     
     // apply any x vel
     pos.x = pos.x + (vel.x * elapsedTime/1000)
@@ -600,7 +660,7 @@ Engine.prototype.mouseDown = function(e) {
                     // check the 4 tiles in front of the player
                     // player tile.x + 1 and +2
                     // player tile.y -0 -1
-                    var playerTile = {x:Math.floor(this.player.pos.x/50),y:Math.floor(this.player.pos.y/50)}
+                    var playerTile = {x:Math.floor(this.player.pos.x/50),y:Math.floor(this.player.pos.y/50)};
                     for (var e=0; e < this.enemies.length; e++) {
                         // compare against those 4 tiles
                         var enemyTile = {x:Math.floor(this.enemies[e].pos.x/50),y:Math.floor(this.enemies[e].pos.y/50)};
@@ -612,6 +672,23 @@ Engine.prototype.mouseDown = function(e) {
                             }
                         }
 
+                    }
+                    // if lns is spawned and has 1 hp, check him
+                    for (var c=0; c < this.characters.length; c++) {
+                        if (this.characters[c].name == "lns") {
+                            var lns = this.characters[c],
+                                lnsTile = {x:Math.floor(lns.pos.x/50),y:Math.floor(lns.pos.y/50)}
+                            if (lns.hp <= 1) {
+                                if (lnsTile.x == playerTile.x + 1 || lnsTile.x == playerTile.x + 2) {
+                                    lns.hp -= 1;
+                                    console.log("lns hp: " + lns.hp);
+                                    lns.vel = {x: 200, y: -400};
+                                    //this.conversation = {cutscene: true, type:"conversation", text:[{speaker:"lns", text:"aaarrrrgghh"}], i: 0};
+
+                                }
+                            }
+                            break;
+                        }
                     }
 
                 }
@@ -665,7 +742,6 @@ Engine.prototype.initImageAssets = function() {
     var self = this;
     // Image Queue
     this.queueImage("assets/x.png","x");
-    this.queueImage("assets/xbroken.png","xbroken");
     this.queueImage("assets/test.png", 'test');
     this.queueImage("assets/grass.png", 'grass');
     this.queueImage("assets/ground.png", 'ground');
@@ -677,12 +753,11 @@ Engine.prototype.initImageAssets = function() {
     this.queueImage("assets/wood.png", 'wood');
     this.queueImage("assets/wood_door.png", 'wood_door');
     
+    this.queueImage("assets/Fireworks.png", "fireworks");
+
     // backgrounds
-    this.queueImage("assets/background_01.png","background_05");
-    this.queueImage("assets/background_02.png","background_04");
-    this.queueImage("assets/background_03.png","background_03");
-    this.queueImage("assets/background_04.png","background_02");
-    this.queueImage("assets/background_05.png","background_01");
+    this.queueImage("assets/background1.png","background_02");
+    this.queueImage("assets/background2.png","background_01");
     
     // characters
     this.queueImage("assets/Hero.png", 'player');
@@ -690,8 +765,11 @@ Engine.prototype.initImageAssets = function() {
     
     this.queueImage("assets/Randy.png", 'randy');
     this.queueImage("assets/Princess.png", 'princess');
+    this.queueImage("assets/LNS.png", 'lns');
+    this.queueImage("assets/sword_LNS.png", 'lnsAttack');
     
     this.queueImage("assets/Monster.png", 'enemy');
+    this.queueImage("assets/Monster_melee.png",'enemy2');
 
     // other
     this.queueImage("assets/Arrow.png", 'arrow');
