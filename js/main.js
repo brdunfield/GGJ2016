@@ -31,7 +31,7 @@ var Engine = function(canvasID) {
     this.conversation = null;
     
     this.enemies = [];
-    this.enemies.push(new Enemy(17,14,"test"));
+    this.enemies.push(new Enemy(17,14,"ranged"));
     
     this.characters = [];
     
@@ -98,7 +98,7 @@ Engine.prototype.animate = function(time) {
     for (var e = this.enemies.length-1; e >= 0; e--) {
         if (this.enemies[e].hp == 0)
             this.enemies.splice(e,1);
-        if (this.enemies[e].pos.x + this.viewport.x < -50) // offscreen enemies
+        else if (this.enemies[e].pos.x + this.viewport.x < -50) // offscreen enemies
             this.enemies.splice(e,1);
     }
     
@@ -128,7 +128,7 @@ Engine.prototype.animate = function(time) {
         if (!this.cutscene) {
             this.enemies[e] = this.physics(this.enemies[e], elapsedTime);
 
-            this.enemies[e].update(this.player, elapsedTime);
+            this.enemies[e].update(this.player, elapsedTime, time);
         }
         // check enemy attacks
         if (this.enemies[e].attacking) {
@@ -177,7 +177,7 @@ Engine.prototype.animate = function(time) {
             // check enemy collisions
             for (var e=0; e < this.enemies.length; e++) {
                 var eTile = {x: Math.floor(this.enemies[e].pos.x/50), y: Math.floor(this.enemies[e].pos.y/50)};
-                if (arrowTile.x == eTile.x && arrowTile.y == eTile.y - 1) { // arrows are -1 in y from the rest of entities because they are not a full tile
+                if (arrowTile.x == eTile.x && (arrowTile.y == eTile.y - 1 || arrowTile.y == eTile.y - 2)) { // arrows are -1 in y from the rest of entities because they are not a full tile
                     // enemy takes damage and arrow dies
                     this.enemies[e].hp --;
                     this.arrow = null;
@@ -197,6 +197,8 @@ Engine.prototype.animate = function(time) {
             this.conversation = e;
             this.lastMessage = time;
             this.conversation.i = 0;
+        } else if (e.type === "enemySpawn") {
+            this.enemies.push(new Enemy(e.x, e.y, e.enemyType));
         } else if (e.type === "special") {
             this.cutscene = true;
             if (e.key ==="xbutton")
@@ -301,7 +303,7 @@ Engine.prototype.render = function(time) {
     for (var e=0; e< this.enemies.length; e++) {
         // for now just render a red square
         var enemy = this.enemies[e];
-        ctx.fillRect(enemy.pos.x + this.viewport.x, enemy.pos.y - 50, 50,50);
+        ctx.drawImage(this.images["enemy"], enemy.pos.x + this.viewport.x, enemy.pos.y - 100);
         
     }
     
@@ -580,6 +582,10 @@ Engine.prototype.initImageAssets = function() {
     this.queueImage("assets/grass.png", 'grass');
     this.queueImage("assets/ground.png", 'ground');
     this.queueImage("assets/lava_sprite.png","lava");
+    this.queueImage("assets/stone.png", 'stone');
+    this.queueImage("assets/stone_ground.png", 'stone_ground');
+    this.queueImage("assets/stone_castle.png", 'stone_castle');
+    
     
     // backgrounds
     this.queueImage("assets/background_01.png","background_05");
@@ -590,6 +596,8 @@ Engine.prototype.initImageAssets = function() {
     
     // characters
     this.queueImage("assets/Hero.png", 'player');
+    
+    this.queueImage("assets/Randy.png", 'enemy');
     
     var loadingPercent = 0;
     var interval = setInterval(function(e) {

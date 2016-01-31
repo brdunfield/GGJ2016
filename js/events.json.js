@@ -18,3 +18,10 @@ events[22] = {
     type:"special",
     key:"xbutton"
 }
+
+events[30] = {
+    type: "enemySpawn",
+    x: 60,
+    y: 12,
+    enemyType: "test"
+}

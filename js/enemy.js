@@ -11,8 +11,15 @@ var Enemy = function(x, y, type) {
         this.ranged = false;
         this.attackRange = 1;
     }
+    if (type =="ranged") {
+        this.hp = 1;
+        this.ranged = true;
+        this.arrow = null;
+        this.shootFrequency = Math.random()*5000 + 3000;
+        this.lastShot = 0;
+    }
 }
-Enemy.prototype.update = function(player, elapsedtime){
+Enemy.prototype.update = function(player, elapsedtime, time){
     // different AI
     // "test" just walks towards player in the x direction
     if (this.hp == 0) {
@@ -38,7 +45,11 @@ Enemy.prototype.update = function(player, elapsedtime){
             }
         }
     } else if (this.type == "ranged") {
-        
+        if (time - this.lastShot > this.shootFrequency) {
+            // fire arrow at player
+            this.lastShot = time;
+            console.log("Firing Arrow!")
+        }
     }
     
     
