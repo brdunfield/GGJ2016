@@ -138,7 +138,7 @@ Engine.prototype.animate = function(time) {
             this.enemies[e] = this.physics(this.enemies[e], elapsedTime);
 
             this.enemies[e].update(this.player, elapsedTime, time);
-            
+
             if (this.enemies[e].arrow) {
                 this.arrows.push(this.enemies[e].arrow);
                 this.enemies[e].arrow = null;
@@ -168,7 +168,7 @@ Engine.prototype.animate = function(time) {
         this.physics(this.characters[c], elapsedTime);
         this.characters[c].update(this.player, elapsedTime);
     }
-    
+
     // if player has fallen off the screen, respawn
     if (this.player.pos.y > window.innerHeight) {
         this.respawn();
@@ -361,7 +361,7 @@ Engine.prototype.render = function(time) {
         numsprites = (char.moving && !char.attacking && !char.jumping ) ? 2 : 1;
         ctx.drawImage(this.images[char.name],((Math.floor(time/200))%numsprites)*50, (char.attacking != false) ? 300 : (char.jumping) ? 200 : (char.moving ) ? 100 : 0, 50, 100, char.pos.x + this.viewport.x - 25,char.pos.y-100, 50, 100);
     }
-    
+
     // arrow trajectory
     // draw line from player to arrow destination
     if (this.arrowPull) {
@@ -470,11 +470,11 @@ Engine.prototype.render = function(time) {
     }
 }
 
-Engine.prototype.physics = function(entity, elapsedTime) {  
+Engine.prototype.physics = function(entity, elapsedTime) {
     // straight up skip physics if elapsed time is comically large
     if (elapsedTime > 500)
         return entity;
-    
+
     var vel = entity.vel,
         pos = entity.pos;
     vel.y = vel.y + (this.gravity*entity.mass*elapsedTime/1000);
