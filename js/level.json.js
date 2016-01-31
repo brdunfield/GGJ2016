@@ -67,19 +67,19 @@ for (var x = 65; x < 85; x++) {
 // AREA 2 ------------------------------------------
 //ground
 for (var x = 100; x < 110; x++) {
-    level[x][18] = {
+    level[x][15] = {
         asset: "grass",
         fillBelowTile: "ground"
     };
 }
 for (var x = 110; x < 120; x++) {
-    level[x][19] = {
+    level[x][16] = {
         asset: "grass",
         fillBelowTile: "ground"
     };
 }
 for (var x = 120; x < 150; x++) {
-    level[x][20] = {
+    level[x][17] = {
         asset: "stone",
         fillBelowTile: "stone_ground"
     };
@@ -100,7 +100,7 @@ level[177][13] = {asset: "stone_ground", fillBelowTile: "stone_ground"};
 level[178][13] = {asset: "stone_ground", fillBelowTile: "stone_ground"};
 
 for (var x = 150; x < 160; x++) {
-    level[x][19] = {
+    level[x][18] = {
         asset: "stone",
         fillBelowTile: "stone_ground"
     };
