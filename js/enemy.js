@@ -7,7 +7,7 @@ var Enemy = function(x, y, type) {
     this.attacking = false;
     this.arrow = null;
     
-    if (type == "test") {
+    if (type == "melee") {
         this.hp = 1;
         this.ranged = false;
         this.attackRange = 1;
@@ -28,11 +28,11 @@ Enemy.prototype.update = function(player, elapsedtime, time){
     // ranged
     // melee
     // passive
-    // "test" just walks towards player in the x direction
+    // "melee" just walks towards player in the x direction
     if (this.hp == 0) {
         // die
     }
-    if (this.type == "test") {
+    if (this.type == "melee") {
         var dist = this.pos.x - player.pos.x;
         // add the amount we can move at speed
         this.moving = true;

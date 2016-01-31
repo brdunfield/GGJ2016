@@ -5,10 +5,14 @@ var Character = function(x, y, name, speed, mass) {
     this.speed = speed;
     this.mass = mass;
     this.attacking = false;
-    this.following = true;
+    this.following = (name != "lns") ? true : false;
     this.moving = false;
     this.jumping = false;
     this.attacking = false;
+    
+    if (name == "lns") {
+        this.hp = 5;
+    }
 }
 Character.prototype.update = function(player, elapsedTime) {
     // if following, move toward the player at speed to within 1 tile (50)

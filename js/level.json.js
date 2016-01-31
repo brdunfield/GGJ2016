@@ -1,10 +1,10 @@
 //level[x][y] = {"asset", "trigger"}
 var level = [];
-for (var i = 0; i < 50000; i++)
+for (var i = 0; i < 5000; i++)
     level[i] = [];
 
 // AREA 1 - LENGTH: 100 ------------------------------------------
-var section1Start = 1000; {
+var section1Start = 0; {
     //ground & background
     for (var x = section1Start + 0; x < section1Start + 14; x++) {
         level[x][17] = {
@@ -117,7 +117,7 @@ var section1Start = 1000; {
 }
 
 // STONE TEMPLE - LENGTH: 100 ------------------------------------
-var stoneTempleStart = 2000; {
+var stoneTempleStart = 1000; {
     //ground
     //lead up
     for (var x = stoneTempleStart; x < stoneTempleStart + 10; x++) {
@@ -213,7 +213,7 @@ var stoneTempleStart = 2000; {
     }
 }
 //CASTLE AREA - LENGTH: 200 --------------------------------------
-var castleStart = 0; {
+var castleStart = 100; {
     //leading up to castle
     for (var x = castleStart; x < castleStart + 40; x++) {
         level[x][17] = {
@@ -284,7 +284,8 @@ function slope(hillStart, hillSectionWidth, hillDivisions, groundHeight, hillSte
         for (var x = hillStart + hillSectionWidth * (d - 1); x < hillStart + hillSectionWidth * d; x++) {
             level[x][groundHeight - hillStepHeight * d] = {
                 asset: groundTile,
-                fillBelowTile: fillTile
+                fillBelowTile: fillTile,
+                wall:true
             };
         }
     }

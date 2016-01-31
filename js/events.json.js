@@ -7,7 +7,10 @@ events[-4] = {
 }
 events[-5] = {
     text:[{speaker: "player", text:"This isn't over yet."},{speaker: "player", text:"..."},{speaker: "player", text:"Look over there! More levels to go through!"}],
-
+}
+events[-10] = {
+    text:[{speaker:"princess", text:"My Hero!"},{speaker:"player", text:"You're safe now, Your Highness!"}]
+}
 // AREA 1 ------------------------------------------
 {
     //move/jump tutorial
@@ -131,25 +134,26 @@ events[-5] = {
     events[castleStart + 29] = {
         type: "enemySpawn",
         x: castleStart + 40,
-        y: 0,
+        y: 15,
         enemyType: "melee"
     }
     events[castleStart + 30] = {
         type: "enemySpawn",
         x: castleStart + 55,
-        y: 0,
+        y: 15,
         enemyType: "ranged"
     }
     events[castleStart + 31] = {
         type: "enemySpawn",
         x: castleStart + 60,
-        y: 0,
+        y: 15,
         enemyType: "ranged"
     }
 
     //boss fight
     events[castleStart + 61] = {
         type: "conversation",
+        cutscene:"true",
         text: [{
             speaker: "player",
             text: "I will find you Lord Night Skull, no matter where you hide!"
@@ -163,13 +167,34 @@ events[-5] = {
             text: "Show yourself evil-doer!"
         }]
     };
+    events[castleStart + 62] = {
+        type: "special",
+        key: "spawnlns"
+    }
 
-    events[castleStart + 72] = {
+    events[castleStart + 75] = {
         type: "conversation",
+        cutscene: true,
         text: [{
             speaker: "princess",
             text: "Help me!"
-        }]
+        }, {
+            speaker: "player",
+            text: "Worry not my love! Your savior has arrived!"
+        },{
+            speaker: "lns",
+            text: "Rats! How did you get here?"
+        },{
+            speaker: "player",
+            text: "At last! You will face justice, fiend!"
+        },{
+            speaker: "lns",
+            text: "You will die where you stand, Sir Erwin Rudolf Josef Alexander!"
+        },]
+    };
+    events[castleStart + 76] = {
+        type: "special",
+        key:"lnsfight"
     };
 
 }
