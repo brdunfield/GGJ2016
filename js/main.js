@@ -3,7 +3,7 @@ var Engine = function(canvasID) {
     // This is required in order to have the proper context in the requestAnimationFrame below400
     var self = this;
     
-    this.debug = true;
+    this.debug = false;
     
     var canvas = document.getElementById(canvasID);
     canvas.width = window.innerWidth;
@@ -168,7 +168,7 @@ Engine.prototype.animate = function(time) {
         // check arrow collision
         // get arrow tile and compare
         var arrowTile = {x:Math.floor(this.arrow.pos.x/50), y:Math.floor(this.arrow.pos.y/50)};
-        if (level[arrowTile.x][arrowTile.y] != undefined) {
+        if (level[arrowTile.x][arrowTile.y] != undefined && !level[arrowTile.x][arrowTile.y].hasOwnProperty("noCollide")) {
             // we hit a tile - arrow dies
             this.arrow = null;
         } else if (dist < 6) {
@@ -418,7 +418,7 @@ Engine.prototype.physics = function(entity, elapsedTime) {
     // collision detection to stop falling
     // check the y tile below the player
     var entityTile = {x: Math.floor((pos.x)/50), y:Math.floor(pos.y/50)}
-    if (level[entityTile.x][entityTile.y] != undefined) {
+    if (level[entityTile.x][entityTile.y] != undefined && !level[entityTile.x][entityTile.y].hasOwnProperty("noCollide")) {
         // reset position to top of tile and kill velocity
         pos.y = (entityTile.y) * 50;
         vel.y = 0;

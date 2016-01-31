@@ -21,6 +21,10 @@ var Enemy = function(x, y, type) {
 }
 Enemy.prototype.update = function(player, elapsedtime, time){
     // different AI
+    // types
+    // ranged
+    // melee
+    // passive
     // "test" just walks towards player in the x direction
     if (this.hp == 0) {
         // die
