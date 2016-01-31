@@ -9,7 +9,7 @@ var Character = function(x, y, name, speed, mass) {
     this.moving = false;
     this.jumping = false;
     this.attacking = false;
-    
+
     if (name == "lns") {
         this.hp = 5;
     }

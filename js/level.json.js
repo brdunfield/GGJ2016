@@ -117,101 +117,102 @@ var section1Start = 0; {
 }
 
 // STONE TEMPLE - LENGTH: 100 ------------------------------------
-var stoneTempleStart = 1000; {
-    //ground
-    //lead up
-    for (var x = stoneTempleStart; x < stoneTempleStart + 10; x++) {
-        level[x][17] = {
-            asset: "grass",
-            fillBelowTile: "ground",
-            wall: true
-        };
-    }
-    //grass hill
-    for (var x = stoneTempleStart + 10; x < stoneTempleStart + 20; x++) {
-        level[x][15] = {
-            asset: "grass",
-            fillBelowTile: "ground",
-            wall: true
-        };
-    }
-    for (var x = stoneTempleStart + 20; x < stoneTempleStart + 50; x++) {
-        level[x][17] = {
-            asset: "stone",
-            fillBelowTile: "stone_ground",
-            wall: true
-        };
-    }
-
-    //pillars
-    level[stoneTempleStart + 63][12] = {
-        asset: "stone_ground",
-        fillBelowTile: "stone_ground"
-    };
-    level[stoneTempleStart + 91][12] = {
-        asset: "stone_ground",
-        fillBelowTile: "stone_ground"
-    };
-
-    level[stoneTempleStart + 67][10] = {
-        asset: "stone_ground",
-        fillBelowTile: "stone_ground"
-    };
-    level[stoneTempleStart + 86][10] = {
-        asset: "stone_ground",
-        fillBelowTile: "stone_ground"
-    };
-
-    level[stoneTempleStart + 72][8] = {
-        asset: "stone_ground",
-        fillBelowTile: "stone_ground"
-    };
-    level[stoneTempleStart + 82][8] = {
-        asset: "stone_ground",
-        fillBelowTile: "stone_ground"
-    };
-
-    level[stoneTempleStart + 76][13] = {
-        asset: "stone_ground",
-        fillBelowTile: "stone_ground"
-    };
-    level[stoneTempleStart + 77][13] = {
-        asset: "stone_ground",
-        fillBelowTile: "stone_ground"
-    };
-    level[stoneTempleStart + 78][13] = {
-        asset: "stone_ground",
-        fillBelowTile: "stone_ground"
-    };
-
-    //stone temple
-    for (var x = stoneTempleStart + 50; x < stoneTempleStart + 60; x++) {
-        level[x][18] = {
-            asset: "stone",
-            fillBelowTile: "stone_ground",
-            wall: true
-        };
-    }
-    for (var x = stoneTempleStart + 60; x < stoneTempleStart + 100; x++) {
-        level[x][18] = {
-            asset: "stone",
-            fillBelowTile: "stone_ground",
-            wall: true
-        };
-    }
-    for (var x = stoneTempleStart + 65; x < stoneTempleStart + 90; x++) {
-        level[x][16] = {
-            asset: "stone",
-            fillBelowTile: "stone_ground"
-        };
-    }
-    for (var x = stoneTempleStart + 70; x < stoneTempleStart + 85; x++) {
-        level[x][14] = {
-            asset: "stone",
-            fillBelowTile: "stone_ground"
-        };
-    }
-}
+var stoneTempleStart = 1000;
+//{
+//    //ground
+//    //lead up
+//    for (var x = stoneTempleStart; x < stoneTempleStart + 10; x++) {
+//        level[x][17] = {
+//            asset: "grass",
+//            fillBelowTile: "ground",
+//            wall: true
+//        };
+//    }
+//    //grass hill
+//    for (var x = stoneTempleStart + 10; x < stoneTempleStart + 20; x++) {
+//        level[x][15] = {
+//            asset: "grass",
+//            fillBelowTile: "ground",
+//            wall: true
+//        };
+//    }
+//    for (var x = stoneTempleStart + 20; x < stoneTempleStart + 50; x++) {
+//        level[x][17] = {
+//            asset: "stone",
+//            fillBelowTile: "stone_ground",
+//            wall: true
+//        };
+//    }
+//
+//    //pillars
+//    level[stoneTempleStart + 63][12] = {
+//        asset: "stone_ground",
+//        fillBelowTile: "stone_ground"
+//    };
+//    level[stoneTempleStart + 91][12] = {
+//        asset: "stone_ground",
+//        fillBelowTile: "stone_ground"
+//    };
+//
+//    level[stoneTempleStart + 67][10] = {
+//        asset: "stone_ground",
+//        fillBelowTile: "stone_ground"
+//    };
+//    level[stoneTempleStart + 86][10] = {
+//        asset: "stone_ground",
+//        fillBelowTile: "stone_ground"
+//    };
+//
+//    level[stoneTempleStart + 72][8] = {
+//        asset: "stone_ground",
+//        fillBelowTile: "stone_ground"
+//    };
+//    level[stoneTempleStart + 82][8] = {
+//        asset: "stone_ground",
+//        fillBelowTile: "stone_ground"
+//    };
+//
+//    level[stoneTempleStart + 76][13] = {
+//        asset: "stone_ground",
+//        fillBelowTile: "stone_ground"
+//    };
+//    level[stoneTempleStart + 77][13] = {
+//        asset: "stone_ground",
+//        fillBelowTile: "stone_ground"
+//    };
+//    level[stoneTempleStart + 78][13] = {
+//        asset: "stone_ground",
+//        fillBelowTile: "stone_ground"
+//    };
+//
+//    //stone temple
+//    for (var x = stoneTempleStart + 50; x < stoneTempleStart + 60; x++) {
+//        level[x][18] = {
+//            asset: "stone",
+//            fillBelowTile: "stone_ground",
+//            wall: true
+//        };
+//    }
+//    for (var x = stoneTempleStart + 60; x < stoneTempleStart + 100; x++) {
+//        level[x][18] = {
+//            asset: "stone",
+//            fillBelowTile: "stone_ground",
+//            wall: true
+//        };
+//    }
+//    for (var x = stoneTempleStart + 65; x < stoneTempleStart + 90; x++) {
+//        level[x][16] = {
+//            asset: "stone",
+//            fillBelowTile: "stone_ground"
+//        };
+//    }
+//    for (var x = stoneTempleStart + 70; x < stoneTempleStart + 85; x++) {
+//        level[x][14] = {
+//            asset: "stone",
+//            fillBelowTile: "stone_ground"
+//        };
+//    }
+//}
 //CASTLE AREA - LENGTH: 200 --------------------------------------
 var castleStart = 100; {
     //leading up to castle
@@ -271,12 +272,62 @@ var castleStart = 100; {
     }
 }
 
-// AREA 3 - LENGTH: xxx ------------------------------------------
-var postCastleStart = castleStart + 200;
-{
+// POST CASTLE - LENGTH: 50 ------------------------------------------
+var postCastleStart = castleStart + 200; {
+    for (var x = postCastleStart; x < postCastleStart + 54; x++) {
+        level[x][17] = {
+            asset: "lava",
+            noCollide: true
+        };
+    }
+    for (var x = postCastleStart; x < postCastleStart + 54; x++) {
+        for (var y = 18; y < 25; y++) {
+            level[x][y] = {
+                asset: "lava_ground",
+                noCollide: true
+            };
+        }
+    }
 
+    //platforms
+    for (var x = postCastleStart; x < postCastleStart + 6; x++) {
+        level[x][16] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 8; x < postCastleStart + 11; x++) {
+        level[x][16] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 13; x < postCastleStart + 15; x++) {
+        level[x][16] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 17; x < postCastleStart + 20; x++) {
+        level[x][15] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 22; x < postCastleStart + 30; x++) {
+        level[x][15] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 34; x < postCastleStart + 50; x++) {
+        level[x][16] = {
+            asset: "stone",
+            fillBelowTile: "stone_ground",
+            wall: true
+        };
+    }
 }
-
 
 //helpers
 function slope(hillStart, hillSectionWidth, hillDivisions, groundHeight, hillStepHeight, groundTile, fillTile) {
@@ -302,7 +353,7 @@ function castleTower(startX, startY, width, height) {
         }
     }
     for (var x = startX; x < startX + width; x++) {
-        if(x % 2 == 0) {
+        if (x % 2 == 0) {
             level[x][startY - height] = {
                 asset: "stone_castle",
                 noCollide: true
@@ -310,3 +361,4 @@ function castleTower(startX, startY, width, height) {
         }
     }
 }
+

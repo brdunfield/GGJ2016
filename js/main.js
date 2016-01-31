@@ -18,7 +18,7 @@ var Engine = function(canvasID) {
     this.viewport = {x:0,y:0};
     this.player = {pos: {x:PLAYERLEFT, y:700},
                   vel:{x:0,y:0},
-                  speed: 200,
+                  speed: 300,
                   mass: 10,
                   player: true,
                   moving: null,
@@ -185,7 +185,7 @@ Engine.prototype.animate = function(time) {
     for (var c=this.characters.length - 1; c >= 0; c--) {
         this.physics(this.characters[c], elapsedTime);
         this.characters[c].update(this.player, elapsedTime);
-        
+
         if (this.lnstimer >= 1000 && this.characters[c].name == "lns") {
             this.cutscene = false;
             this.characters[c].attacking = false;
@@ -198,7 +198,7 @@ Engine.prototype.animate = function(time) {
             this.conversation = events[-10];
             this.conversation.i = 0;
             this.lastMessage = time;
-            
+
             // add fireworks
             for (var x = castleStart + 85; x < castleStart + 113; x+= 2) {
                 level[castleStart + x][6] = {
@@ -247,7 +247,7 @@ Engine.prototype.animate = function(time) {
                         this.arrows.splice(a, 1);
                         break;
                     }
-                    
+
                 }
             } else if (arrow.owner == "enemy") {
                 if (arrowTile.x == playerTile.x && (arrowTile.y == playerTile.y - 1 || arrowTile.y == playerTile.y - 2)) { // arrows are -1 in y from the rest of entities because they are not a full tile
@@ -691,7 +691,7 @@ Engine.prototype.mouseDown = function(e) {
                                     console.log("lns hp: " + lns.hp);
                                     lns.vel = {x: 200, y: -400};
                                     //this.conversation = {cutscene: true, type:"conversation", text:[{speaker:"lns", text:"aaarrrrgghh"}], i: 0};
-                                    
+
                                 }
                             }
                             break;
@@ -753,6 +753,7 @@ Engine.prototype.initImageAssets = function() {
     this.queueImage("assets/grass.png", 'grass');
     this.queueImage("assets/ground.png", 'ground');
     this.queueImage("assets/lava_sprite.png","lava");
+    this.queueImage("assets/lava_ground.png","lava_ground");
     this.queueImage("assets/stone.png", 'stone');
     this.queueImage("assets/stone_ground.png", 'stone_ground');
     this.queueImage("assets/stone_castle.png", 'stone_castle');
@@ -760,7 +761,7 @@ Engine.prototype.initImageAssets = function() {
     this.queueImage("assets/wood_door.png", 'wood_door');
     
     this.queueImage("assets/Fireworks.png", "fireworks");
-    
+
     // backgrounds
     this.queueImage("assets/background1.png","background_02");
     this.queueImage("assets/background2.png","background_01");
