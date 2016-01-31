@@ -213,7 +213,7 @@ var stoneTempleStart = 2000; {
     }
 }
 //CASTLE AREA - LENGTH: 200 --------------------------------------
-var castleStart = 0; {
+var castleStart = 3000; {
     //leading up to castle
     for (var x = castleStart; x < castleStart + 40; x++) {
         level[x][17] = {
@@ -271,11 +271,65 @@ var castleStart = 0; {
     }
 }
 
-// AREA 3 - LENGTH: xxx ------------------------------------------
+// POST CASTLE - LENGTH: 50 ------------------------------------------
 var postCastleStart = castleStart + 200;
-{
+postCastleStart = 0; {
+    for (var x = postCastleStart; x < postCastleStart + 54; x++) {
+        level[x][17] = {
+            asset: "lava",
+            noCollide: true
+        };
+    }
+    for (var x = postCastleStart; x < postCastleStart + 54; x++) {
+        for (var y = 18; y < 25; y++) {
+            level[x][y] = {
+                asset: "lava_ground",
+                noCollide: true
+            };
+        }
+    }
 
+    //platforms
+    for (var x = postCastleStart; x < postCastleStart + 6; x++) {
+        level[x][16] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 8; x < postCastleStart + 11; x++) {
+        level[x][16] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 13; x < postCastleStart + 15; x++) {
+        level[x][16] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 17; x < postCastleStart + 20; x++) {
+        level[x][15] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 22; x < postCastleStart + 30; x++) {
+        level[x][15] = {
+            asset: "stone",
+            wall: true
+        };
+    }
+    for (var x = postCastleStart + 34; x < postCastleStart + 50; x++) {
+        level[x][16] = {
+            asset: "stone",
+            fillBelowTile: "stone_ground",
+            wall: true
+        };
+    }
 }
+
+
 
 
 //helpers
@@ -301,7 +355,7 @@ function castleTower(startX, startY, width, height) {
         }
     }
     for (var x = startX; x < startX + width; x++) {
-        if(x % 2 == 0) {
+        if (x % 2 == 0) {
             level[x][startY - height] = {
                 asset: "stone_castle",
                 noCollide: true
@@ -309,3 +363,4 @@ function castleTower(startX, startY, width, height) {
         }
     }
 }
+

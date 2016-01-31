@@ -7,7 +7,7 @@ events[-4] = {
 }
 events[-5] = {
     text:[{speaker: "player", text:"This isn't over yet."},{speaker: "player", text:"..."},{speaker: "player", text:"Look over there! More levels to go through!"}],
-
+}
 // AREA 1 ------------------------------------------
 {
     //move/jump tutorial
@@ -172,4 +172,82 @@ events[-5] = {
         }]
     };
 
+}
+
+// POST CASTLE - LENGTH: xxx ------------------------------------------
+{
+    events[postCastleStart+10] = {
+        type: "enemySpawn",
+        x: postCastleStart + 48,
+        y: 8,
+        enemyType: "ranged"
+    }
+
+    events[postCastleStart + 47] = {
+        type: "conversation",
+        text: [{
+            speaker: "player",
+            text: "See! There’s no need to stop playing anytime soon! This is so fun!"
+        }]
+    };
+}
+
+
+
+var endingStart = postCastleStart + 54;
+{
+    var repeatOffset = endingStart + 0;
+
+    for(var i = 0; i < 50; i++) {
+        repeatOffset += repeatSection1(repeatOffset);
+    }
+}
+
+function repeatSection1(offset) {
+    for (var x = offset + 0; x < offset + 14; x++) {
+        level[x][17] = {
+            asset: "grass",
+            fillBelowTile: "ground",
+            wall: true
+        };
+    }
+
+    events[offset+20] = {
+        type: "enemySpawn",
+        x: offset + 38,
+        y: 14,
+        enemyType: "melee"
+    }
+
+    events[offset + 1] = {
+        type: "enemySpawn",
+        x: offset + 8,
+        y: 14,
+        enemyType: "ranged"
+    }
+
+    slope(offset + 14, 3, 2, 17, 1, "grass", "ground");
+    slope(offset + 20, 3, 2, 15, -1, "grass", "ground");
+
+    for (var x = offset + 26; x < offset + 50; x++) {
+        level[x][17] = {
+            asset: "grass",
+            fillBelowTile: "ground",
+            wall: true
+        };
+    }
+
+    slope(offset + 50, 4, 3, 17, 2, "grass", "ground");
+    slope(offset + 62, 5, 3, 15, -1, "grass", "ground");
+
+    for (var x = offset + 77; x < offset + 100; x++) {
+        level[x][17] = {
+            asset: "grass",
+            fillBelowTile: "ground",
+            wall: true
+        };
+    }
+
+    var length = 50;
+    return length;
 }

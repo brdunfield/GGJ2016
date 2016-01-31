@@ -3,7 +3,7 @@ var Engine = function(canvasID) {
     // This is required in order to have the proper context in the requestAnimationFrame below400
     var self = this;
     
-    this.debug = true;
+    this.debug = false;
     
     var canvas = document.getElementById(canvasID);
     canvas.width = window.innerWidth;
@@ -670,6 +670,7 @@ Engine.prototype.initImageAssets = function() {
     this.queueImage("assets/grass.png", 'grass');
     this.queueImage("assets/ground.png", 'ground');
     this.queueImage("assets/lava_sprite.png","lava");
+    this.queueImage("assets/lava_ground.png","lava_ground");
     this.queueImage("assets/stone.png", 'stone');
     this.queueImage("assets/stone_ground.png", 'stone_ground');
     this.queueImage("assets/stone_castle.png", 'stone_castle');
