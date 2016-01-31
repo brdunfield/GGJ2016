@@ -3,7 +3,7 @@ var Engine = function(canvasID) {
     // This is required in order to have the proper context in the requestAnimationFrame below400
     var self = this;
     
-    this.debug = false;
+    this.debug = true;
     
     var canvas = document.getElementById(canvasID);
     canvas.width = window.innerWidth;
@@ -17,10 +17,13 @@ var Engine = function(canvasID) {
     // Game Variables
     this.viewport = {x:0,y:0};
     this.player = {pos: {x:PLAYERLEFT, y:700},
-                 vel:{x:0,y:0},
-                   speed: 200,
-                 mass: 10,
-                  player: true}
+                  vel:{x:0,y:0},
+                  speed: 200,
+                  mass: 10,
+                  player: true,
+                  moving: null,
+                  attacking:null,
+                  jumping: false}
     this.arrowPull = false;
     
     this.mousePos = {x:0, y:0};
@@ -31,7 +34,7 @@ var Engine = function(canvasID) {
     this.conversation = null;
     
     this.enemies = [];
-    this.enemies.push(new Enemy(17,14,"ranged"));
+    this.enemies.push(new Enemy(17,10,"ranged"));
     
     this.characters = [];
     
@@ -44,12 +47,12 @@ var Engine = function(canvasID) {
         ======================= Time based Motion Variables =======================
     */
     // speeds are in px/s
-    this.moving = null;
     this.playerSpeed = 200;
     this.arrowSpeed = 600;
     this.arrow = null;
+    this.arrows = [];
     
-    this.gravity = 2;
+    this.gravity = 100;
     
     this.messageSpeed = 4000; // autoplay messages will advance after 5s
     this.lastMessage = 0;
@@ -109,7 +112,7 @@ Engine.prototype.animate = function(time) {
     
     // Update player position if there has been a key press
     // don't move if there's a dialog to deal with
-    if (this.moving !== null && !this.dialog) {
+    if (this.player.moving !== null && !this.dialog) {
         // check if we would collide with a wall if we progressed
         var testx = this.player.pos.x + this.player.speed * (elapsedTime / 1000) + 25;
         var testTile = {x:Math.floor(testx/50), y: Math.floor(this.player.pos.y/50) - 1};
@@ -121,6 +124,11 @@ Engine.prototype.animate = function(time) {
             if (this.player.pos.x + this.viewport.x > PLAYERLEFT)
                 this.viewport.x -= this.player.speed * (elapsedTime / 1000);
         }
+    }
+    if (this.player.attacking != null) {
+        this.player.attacking += elapsedTime;
+        if (this.player.attacking > 500)
+            this.player.attacking = null;
     }
     
     // apply gravity to enemies and update
@@ -157,31 +165,31 @@ Engine.prototype.animate = function(time) {
     }
     
     // update arrow if any
-    if (this.arrow) {
-        // get arrow vector line, and move along it at arrow speed
-        var dist = Math.sqrt(Math.pow(this.arrow.dest.x - this.arrow.pos.x,2) + Math.pow(this.arrow.dest.y - this.arrow.pos.y,2));
-        // d = how much the arrow has moved
-        var d = this.arrowSpeed * elapsedTime/1000;
-        this.arrow.pos.x += (d/dist)*(this.arrow.dest.x - this.arrow.pos.x);
-        this.arrow.pos.y += (d/dist)*(this.arrow.dest.y - this.arrow.pos.y);
+    for (var a=this.arrows.length - 1; a >= 0; a--) {
+        var arrow = this.arrows[a];
+        arrow.update(elapsedTime);
         
         // check arrow collision
         // get arrow tile and compare
-        var arrowTile = {x:Math.floor(this.arrow.pos.x/50), y:Math.floor(this.arrow.pos.y/50)};
+        var arrowTile = {x:Math.floor(arrow.pos.x/50), y:Math.floor(arrow.pos.y/50)};
         if (level[arrowTile.x][arrowTile.y] != undefined && !level[arrowTile.x][arrowTile.y].hasOwnProperty("noCollide")) {
             // we hit a tile - arrow dies
-            this.arrow = null;
-        } else if (dist < 6) {
-            this.arrow = null
+            this.arrows.splice(a, 1);
+        } else if (arrow.dist < 6) {
+            // if a plot arrow, do stuff here
+            
+            this.arrows.splice(a, 1);
         } else {
-            // check enemy collisions
-            for (var e=0; e < this.enemies.length; e++) {
-                var eTile = {x: Math.floor(this.enemies[e].pos.x/50), y: Math.floor(this.enemies[e].pos.y/50)};
-                if (arrowTile.x == eTile.x && (arrowTile.y == eTile.y - 1 || arrowTile.y == eTile.y - 2)) { // arrows are -1 in y from the rest of entities because they are not a full tile
-                    // enemy takes damage and arrow dies
-                    this.enemies[e].hp --;
-                    this.arrow = null;
-                    break;
+            // check collisions
+            if (arrow.owner == "player") {
+                for (var e=0; e < this.enemies.length; e++) {
+                    var eTile = {x: Math.floor(this.enemies[e].pos.x/50), y: Math.floor(this.enemies[e].pos.y/50)};
+                    if (arrowTile.x == eTile.x && (arrowTile.y == eTile.y - 1 || arrowTile.y == eTile.y - 2)) { // arrows are -1 in y from the rest of entities because they are not a full tile
+                        // enemy takes damage and arrow dies
+                        this.enemies[e].hp --;
+                        this.arrows.splice(a, 1);
+                        break;
+                    }
                 }
             }
         }
@@ -201,7 +209,10 @@ Engine.prototype.animate = function(time) {
             this.enemies.push(new Enemy(e.x, e.y, e.enemyType));
         } else if (e.type === "special") {
             this.cutscene = true;
-            if (e.key ==="xbutton")
+            if (e.key ==="xbutton") {
+                // create a special "plot arrow" that attacks the x button. When it connects, x button falls
+                
+            }
                 this.xButton.falling = true;
         }
         
@@ -224,7 +235,7 @@ Engine.prototype.animate = function(time) {
     */
     // apply gravity to x button if falling
     if (this.xButton.falling) {
-        this.xButton.vel.y = this.xButton.vel.y + (this.gravity*10 + elapsedTime/1000);
+        this.xButton.vel.y = this.xButton.vel.y + (this.gravity*10*elapsedTime/1000);
         this.xButton.y = this.xButton.y + (this.xButton.vel.y * elapsedTime/1000);
         this.xButton.x = this.xButton.x + (this.xButton.vel.x * elapsedTime/1000)
         
@@ -242,7 +253,6 @@ Engine.prototype.animate = function(time) {
     
     // Calculate FPS
     this.fps = Math.round(1000 / (time - this.lastTime));
-    this.lastTime = time;
     
     /*
         ======================= Render =======================
@@ -252,6 +262,7 @@ Engine.prototype.animate = function(time) {
     /*
         ======================= Call Next Frame =======================
     */
+    this.lastTime = time;
     window.requestAnimationFrame(function(time) {
         self.animate.call(self, time);
     });
@@ -294,9 +305,10 @@ Engine.prototype.render = function(time) {
     }
     
     // player
-    var numsprites = (this.moving) ? 2 : 1;
-    ctx.drawImage(this.images["player"],((Math.floor(time/200))%numsprites)*50, (this.moving) ? 100 : 0, 50, 100, this.player.pos.x + this.viewport.x - 25,this.player.pos.y-100, 50, 100);
-    //ctx.drawImage(this.images["player"], this.player.pos.x + this.viewport.x - 25,this.player.pos.y-100);
+    var numsprites = (this.player.moving && !this.player.attacking && !this.player.jumping ) ? 2 : 1;
+    ctx.drawImage(this.images["player"],((Math.floor(time/200))%numsprites)*50, (this.player.attacking != null) ? 300 : (this.player.jumping) ? 200 : (this.player.moving ) ? 100 : 0, 50, 100, this.player.pos.x + this.viewport.x - 25,this.player.pos.y-100, 50, 100);
+    if (this.player.attacking != null)
+        ctx.drawImage(this.images["playerAttack"], this.player.pos.x + this.viewport.x + 25,this.player.pos.y-100)
     
     // enemies
     ctx.fillStyle = "#832300";
@@ -313,16 +325,16 @@ Engine.prototype.render = function(time) {
         ctx.strokeStyle = "#00894a";
         
         ctx.beginPath();
-        ctx.moveTo(this.player.pos.x + this.viewport.x + 25, this.player.pos.y -25);
+        ctx.moveTo(this.player.pos.x + this.viewport.x + 25, this.player.pos.y -75);
         ctx.lineTo(this.mousePos.x, this.mousePos.y)
         ctx.stroke();
         
     }
     
     // render arrow
-    if (this.arrow) {
-        ctx.fillStyle = "#ff8900";
-        ctx.fillRect(this.arrow.pos.x + this.viewport.x, this.arrow.pos.y, 25, 3);
+    ctx.fillStyle = "#ff8900";
+    for (var a=0; a < this.arrows.length; a++) {
+        ctx.fillRect(this.arrows[a].pos.x + this.viewport.x, this.arrows[a].pos.y, 25, 3);
     }
     
     // UI: Health and Score
@@ -406,10 +418,14 @@ Engine.prototype.render = function(time) {
     }
 }
 
-Engine.prototype.physics = function(entity, elapsedTime) {   
+Engine.prototype.physics = function(entity, elapsedTime) {  
+    // straight up skip physics if elapsed time is comically large
+    if (elapsedTime > 500)
+        return entity;
+    
     var vel = entity.vel,
         pos = entity.pos;
-    vel.y = vel.y + (this.gravity*entity.mass + elapsedTime/1000);
+    vel.y = vel.y + (this.gravity*entity.mass*elapsedTime/1000);
     pos.y = pos.y + (vel.y * elapsedTime/1000)
     
     // apply any x vel
@@ -422,6 +438,8 @@ Engine.prototype.physics = function(entity, elapsedTime) {
         // reset position to top of tile and kill velocity
         pos.y = (entityTile.y) * 50;
         vel.y = 0;
+        if (entity.hasOwnProperty("jumping"))
+            entity.jumping = false;
         
         // if there is an x vel, kill it here
         vel.x = 0;
@@ -463,10 +481,13 @@ Engine.prototype.keyPressed = function(e) {
         switch(e.keyCode) {
             case 39: 
             case 68:
-                this.moving = 'right'; break; // right
+                if (!this.player.attacking)
+                    this.player.moving = true; break; // right
             case 32: // jump
-                if (this.player.vel.y == 0)
-                    this.player.vel.y = -650;
+                if (this.player.vel.y == 0) {
+                    this.player.vel.y = -550;
+                    this.player.jumping = true;
+                }
                 break;
         }
     
@@ -475,7 +496,7 @@ Engine.prototype.keyReleased = function(e) {
     switch(e.keyCode) {
         case 39: 
         case 68:
-            this.moving = null;
+            this.player.moving = null;
             break;
         case 13:
             // enter key - proceed in conversation
@@ -515,7 +536,8 @@ Engine.prototype.mouseDown = function(e) {
                 } else {
                     // attack
                     // TODO - animation
-
+                    this.player.attacking = 0;
+                    this.player.moving = null;
                     // check the 4 tiles in front of the player
                     // player tile.x + 1 and +2
                     // player tile.y -0 -1
@@ -553,9 +575,15 @@ Engine.prototype.mouseUp = function(e) {
             case 3:
                 // right click -  release arrow
                 this.arrowPull = false;
-                if (this.arrow == null) {
+                // see if there is a player owned arrow
+                var newArrow = true;
+                for (var a = 0; a < this.arrows.length; a++) {
+                    if (this.arrows[a].owner == "player")
+                        newArrow = false;
+                }
+                if (newArrow) {
                     var dest = {x:this.mousePos.x - this.viewport.x, y: this.mousePos.y};
-                    this.arrow = {dest:dest, pos:{x:this.player.pos.x + 25, y: this.player.pos.y - 25}};
+                    this.arrows.push(new Arrow({x:this.player.pos.x + 25, y: this.player.pos.y - 75}, dest, "player"));
                 }
                 break;
         }
@@ -596,6 +624,7 @@ Engine.prototype.initImageAssets = function() {
     
     // characters
     this.queueImage("assets/Hero.png", 'player');
+    this.queueImage("assets/sword.png", 'playerAttack');
     
     this.queueImage("assets/Randy.png", 'enemy');
     
