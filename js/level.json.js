@@ -1,18 +1,30 @@
 //level[x][y] = {"asset", "trigger"}
 var level = [];
-for (var i = 0; i < 500; i++)
+for (var i = 0; i < 50000; i++)
     level[i] = [];
 
 // AREA 1 - LENGTH: 100 ------------------------------------------
-var section1Start = 0; {
+var section1Start = 1000; {
     //ground & background
-    for (var x = section1Start + 0; x < section1Start + 30; x++) {
+    for (var x = section1Start + 0; x < section1Start + 14; x++) {
         level[x][17] = {
             asset: "grass",
             fillBelowTile: "ground",
             wall: true
         };
     }
+
+    //first hill
+    slope(section1Start + 14, 3, 2, 17, 1, "grass", "ground");
+    for (var x = section1Start + 20; x < section1Start + 30; x++) {
+        level[x][16] = {
+            asset: "grass",
+            fillBelowTile: "ground",
+            wall: true
+        };
+    }
+
+
     //PIT
     //HILL IN FRONT OF STONE BG
     for (var x = section1Start + 70; x < section1Start + 80; x++) {
@@ -45,8 +57,6 @@ var section1Start = 0; {
     }
 
     //FOREGROUND
-    //first hill
-    hill(section1Start + 15, 4, 17, 3, "grass", "ground");
     //grass platforming section
     for (var x = section1Start + 33; x < section1Start + 36; x++) {
         level[x][15] = {
@@ -54,39 +64,39 @@ var section1Start = 0; {
             wall: true
         };
     }
-    for (var x = section1Start + 40; x < section1Start + 42; x++) {
+    for (var x = section1Start + 38; x < section1Start + 42; x++) {
         level[x][13] = {
             asset: "grass",
             wall: true
         };
     }
     for (var x = section1Start + 45; x < section1Start + 51; x++) {
-        level[x][14] = {
+        level[x][12] = {
             asset: "grass",
             wall: true
         };
     }
     for (var x = section1Start + 53; x < section1Start + 55; x++) {
-        level[x][14] = {
+        level[x][13] = {
             asset: "grass",
             wall: true
         };
     }
-    for (var x = section1Start + 57; x < section1Start + 58; x++) {
-        level[x][13] = {
+    for (var x = section1Start + 57; x < section1Start + 59; x++) {
+        level[x][12] = {
             asset: "grass",
             wall: true
         };
     }
     for (var x = section1Start + 62; x < section1Start + 66; x++) {
-        level[x][13] = {
+        level[x][11] = {
             asset: "grass",
             fillBelowTile: "ground",
             wall: true
         };
     }
     for (var x = section1Start + 66; x < section1Start + 70; x++) {
-        level[x][15] = {
+        level[x][11] = {
             asset: "grass",
             fillBelowTile: "ground",
             wall: true
@@ -106,21 +116,20 @@ var section1Start = 0; {
     };
 }
 
-// AREA 2 - LENGTH: 100 ------------------------------------------
-var stoneTempleStart = 100; {
+// STONE TEMPLE - LENGTH: 100 ------------------------------------
+var stoneTempleStart = 2000; {
     //ground
     //lead up
     for (var x = stoneTempleStart; x < stoneTempleStart + 10; x++) {
-        level[x][15] = {
+        level[x][17] = {
             asset: "grass",
             fillBelowTile: "ground",
             wall: true
         };
     }
     //grass hill
-    hill(stoneTempleStart + 6, 14, 14, 2, "grass", "ground");
     for (var x = stoneTempleStart + 10; x < stoneTempleStart + 20; x++) {
-        level[x][16] = {
+        level[x][15] = {
             asset: "grass",
             fillBelowTile: "ground",
             wall: true
@@ -203,8 +212,8 @@ var stoneTempleStart = 100; {
         };
     }
 }
-//CASTLE AREA - LENGTH: 250 --------------------------------------
-var castleStart = 200; {
+//CASTLE AREA - LENGTH: 200 --------------------------------------
+var castleStart = 0; {
     //leading up to castle
     for (var x = castleStart; x < castleStart + 40; x++) {
         level[x][17] = {
@@ -222,8 +231,30 @@ var castleStart = 200; {
         };
     }
 
+    //castle
+    castleTower(castleStart + 30, 17, 11, 15);
+    //castle entrance door
+    level[castleStart + 30][15] = {
+        asset: "wood",
+        noCollide: true
+    };
+    level[castleStart + 30][16] = {
+        asset: "wood_door",
+        noCollide: true
+    };
+    castleTower(castleStart + 41, 17, 21, 11);
+    castleTower(castleStart + 62, 17, 11, 15);
+
+
+    //boss room
+    castleTower(castleStart + 73, 17, 41, 11);
+    castleTower(castleStart + 114, 17, 11, 15);
+
+    //castle ends castleStart + 125, floor ends 130
+
+
     //castle floor
-    for (var x = castleStart + 20; x < castleStart + 120; x++) {
+    for (var x = castleStart + 20; x < castleStart + 130; x++) {
         level[x][17] = {
             asset: "stone",
             fillBelowTile: "stone_ground",
@@ -231,78 +262,50 @@ var castleStart = 200; {
         };
     }
 
-    //castle
-    for (var x = castleStart + 30; x < castleStart + 150; x++) {
-        for (var y = 6; y < 16; y++) {
-            level[x][y] = {
-                asset: "stone_castle",
-                noCollide: true
-            };
-        }
-    }
-
-    for (var x = castleStart + 30; x < castleStart + 101; x++) {
-        if (x % 2 == 0) {
-            level[x][5] = {
-                asset: "stone_castle",
-                noCollide: true
-            };
-        }
-    }
-
     //after castle
-    for (var x = castleStart + 150; x < castleStart + 160; x++) {
+    for (var x = castleStart + 130; x < castleStart + 200; x++) {
         level[x][17] = {
             asset: "ground",
-            fillBelowTile: "ground"
-        };
-    }
-    //end scene with fireworks
-    for (var x = castleStart + 160; x < castleStart + 250; x++) {
-        level[x][16] = {
-            asset: "grass",
             fillBelowTile: "ground"
         };
     }
 }
 
 // AREA 3 - LENGTH: xxx ------------------------------------------
+var postCastleStart = castleStart + 200;
+{
 
+}
 
 
 //helpers
-function hill(hillStart, hillSection, groundHeight, hillScale, groundTile, fillTile) {
-    for (var x = hillStart; x < hillStart + hillSection; x++) {
-        level[x][groundHeight - hillScale] = {
-            asset: groundTile,
-            fillBelowTile: fillTile
-        };
-    }
-    for (var x = hillStart + hillSection; x < hillStart + hillSection * 2; x++) {
-        level[x][groundHeight - hillScale * 2] = {
-            asset: groundTile,
-            fillBelowTile: fillTile
-        };
-    }
-    for (var x = hillStart + hillSection * 2; x < hillStart + hillSection * 3; x++) {
-        level[x][groundHeight - hillScale] = {
-            asset: groundTile,
-            fillBelowTile: fillTile
-        };
+function slope(hillStart, hillSectionWidth, hillDivisions, groundHeight, hillStepHeight, groundTile, fillTile) {
+    for (var d = 1; d <= hillDivisions; d++) {
+        for (var x = hillStart + hillSectionWidth * (d - 1); x < hillStart + hillSectionWidth * d; x++) {
+            level[x][groundHeight - hillStepHeight * d] = {
+                asset: groundTile,
+                fillBelowTile: fillTile
+            };
+        }
     }
 }
 
-//function slope(startX, endX, startY, endY, divisions){
-//    var sectionX = (endX - startX) / divisions;
-//    var sectionHeightChange = (endY - startY) / divisions;
-//
-//    for(var d = 1; d <= divisions; d++) {
-//        for(var x = startX + sectionX*(d-1); x < startX + sectionX*d; x++) {
-//            var y = startY + (sectionHeightChange * d-1);
-//            level[x][y] = {
-//                asset: "grass",
-//                fillBelowTile: "ground"
-//            };
-//        }
-//    }
-//}
+function castleTower(startX, startY, width, height) {
+    for (var x = startX; x < startX + width; x++) {
+        for (var y = startY; y > startY - height; y--) {
+            level[x][y] = {
+                asset: "stone_castle",
+                fillBelowTile: "stone_castle",
+                noCollide: true
+            };
+        }
+    }
+    for (var x = startX; x < startX + width; x++) {
+        if(x % 2 == 0) {
+            level[x][startY - height] = {
+                asset: "stone_castle",
+                noCollide: true
+            };
+        }
+    }
+}
