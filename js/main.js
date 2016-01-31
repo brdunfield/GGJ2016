@@ -34,7 +34,7 @@ var Engine = function(canvasID) {
     this.conversation = null;
     
     this.enemies = [];
-    this.enemies.push(new Enemy(17,10,"ranged"));
+//    this.enemies.push(new Enemy(17,10,"ranged"));
     
     this.characters = [];
     this.characters.push(new Character(4, 10, "princess", 30, 5))
@@ -645,7 +645,8 @@ Engine.prototype.initImageAssets = function() {
     this.queueImage("assets/stone.png", 'stone');
     this.queueImage("assets/stone_ground.png", 'stone_ground');
     this.queueImage("assets/stone_castle.png", 'stone_castle');
-    
+    this.queueImage("assets/wood.png", 'wood');
+    this.queueImage("assets/wood_door.png", 'wood_door');
     
     // backgrounds
     this.queueImage("assets/background_01.png","background_05");
