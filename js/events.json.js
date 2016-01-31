@@ -25,3 +25,35 @@ events[30] = {
     y: 12,
     enemyType: "test"
 }
+
+// AREA 1 ------------------------------------------
+//hill enemy
+
+//stone hill enemies
+
+events[20] = {
+    type: "enemySpawn",
+    x: 60,
+    y: 9,
+    enemyType: "ranged"
+}
+
+//stacked enemies
+events[35] = {
+    type: "enemySpawn",
+    x: 72,
+    y: 3,
+    enemyType: "ranged"
+}
+events[36] = {
+    type: "enemySpawn",
+    x: 74,
+    y: 6,
+    enemyType: "ranged"
+}
+events[37] = {
+    type: "enemySpawn",
+    x: 73,
+    y: 9,
+    enemyType: "ranged"
+}
