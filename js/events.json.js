@@ -8,7 +8,7 @@ events[7] = {
 
 events[12] = {
     type:"conversation",
-    text:[{speaker: "player", text:"Test Conversation!"},{speaker: "player", text:"Still Testing!"}],
+    text:[{speaker: "princess", text:"Test Conversation!"},{speaker: "player", text:"Still Testing!"}],
     stopMovement: false,
     autoplay: true
 }

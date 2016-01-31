@@ -37,6 +37,7 @@ var Engine = function(canvasID) {
     this.enemies.push(new Enemy(17,10,"ranged"));
     
     this.characters = [];
+    this.characters.push(new Character(4, 10, "princess", 30, 5))
     
     // PLot variables
     this.cutscene = false;
@@ -137,6 +138,11 @@ Engine.prototype.animate = function(time) {
             this.enemies[e] = this.physics(this.enemies[e], elapsedTime);
 
             this.enemies[e].update(this.player, elapsedTime, time);
+            
+            if (this.enemies[e].arrow) {
+                this.arrows.push(this.enemies[e].arrow);
+                this.enemies[e].arrow = null;
+            }
         }
         // check enemy attacks
         if (this.enemies[e].attacking) {
@@ -149,14 +155,18 @@ Engine.prototype.animate = function(time) {
                 if (enemyTile.y == playerTile.y && Math.abs(enemyTile.x - playerTile.x) < 2) {
                     console.log("Enemy attack hit");
                     
-                    // knockback player if they are not at the left of hte screen
-                    var velx = (this.player.pos.x + this.viewport.x < 75) ? 0 : -200
-                    this.player.vel = {x:velx, y:-400};
+                    this.knockback();
                 }
             }
             this.enemies[e].attacking = false;
 
         }
+    }
+    
+    // Update characters
+    for (var c=0; c < this.characters.length; c++) {
+        this.physics(this.characters[c], elapsedTime);
+        this.characters[c].update();
     }
     
     // if player has fallen off the screen, respawn
@@ -190,6 +200,12 @@ Engine.prototype.animate = function(time) {
                         this.arrows.splice(a, 1);
                         break;
                     }
+                }
+            } else if (arrow.owner == "enemy") {
+                if (arrowTile.x == playerTile.x && (arrowTile.y == playerTile.y - 1 || arrowTile.y == playerTile.y - 2)) { // arrows are -1 in y from the rest of entities because they are not a full tile
+                    this.arrows.splice(a, 1);
+                    this.knockback();
+                    break;
                 }
             }
         }
@@ -280,7 +296,7 @@ Engine.prototype.render = function(time) {
     ctx.drawImage(this.images["background_01"],this.viewport.x/5,0);
     ctx.drawImage(this.images["background_02"],this.viewport.x/4,0);
     ctx.drawImage(this.images["background_03"],this.viewport.x/3,0);
-    ctx.drawImage(this.images["background_04"],this.viewport.x/2,0);
+    //ctx.drawImage(this.images["background_04"],this.viewport.x/2,0);
     ctx.drawImage(this.images["background_05"],this.viewport.x/1.2,0);
     
     // render level present in the viewport
@@ -311,12 +327,17 @@ Engine.prototype.render = function(time) {
         ctx.drawImage(this.images["playerAttack"], this.player.pos.x + this.viewport.x + 25,this.player.pos.y-100)
     
     // enemies
-    ctx.fillStyle = "#832300";
     for (var e=0; e< this.enemies.length; e++) {
         // for now just render a red square
         var enemy = this.enemies[e];
         ctx.drawImage(this.images["enemy"], enemy.pos.x + this.viewport.x, enemy.pos.y - 100);
         
+    }
+    
+    // NPC characters
+    for (var c=0; c < this.characters.length; c++) {
+        var char = this.characters[c];
+        ctx.drawImage(this.images[char.name],char.pos.x + this.viewport.x, char.pos.y - 100 );
     }
     
     // arrow trajectory
@@ -370,8 +391,13 @@ Engine.prototype.render = function(time) {
         if (blurb.speaker == "player") {
             tx = this.player.pos.x - 100;
             ty = this.player.pos.y - 200;
-        } else {
-            
+        } else if (blurb.speaker != "enemy") {
+            for (var c=0; c < this.characters.length; c++) {
+                if (blurb.speaker == this.characters[c].name) {
+                    tx = this.characters[c].pos.x - 100;
+                    ty = this.characters[c].pos.y - 200;
+                }
+            }
         }
         
         ctx.fillStyle = "#b1ff00";
@@ -465,6 +491,12 @@ Engine.prototype.respawn = function() {
     this.player.pos.x = Math.max(0, PLAYERLEFT - this.viewport.x);
 
 
+}
+
+Engine.prototype.knockback = function() {
+    // knockback player if they are not at the left of hte screen
+    var velx = (this.player.pos.x + this.viewport.x < 75) ? 0 : -200
+    this.player.vel = {x:velx, y:-400};
 }
 
 Engine.prototype.restartGame = function() {
@@ -627,6 +659,7 @@ Engine.prototype.initImageAssets = function() {
     this.queueImage("assets/sword.png", 'playerAttack');
     
     this.queueImage("assets/Randy.png", 'enemy');
+    this.queueImage("assets/Princess.png", 'princess');
     
     var loadingPercent = 0;
     var interval = setInterval(function(e) {
