@@ -139,20 +139,49 @@ for (var x = 240; x < 250; x++) {
     };
 }
 
-for (var x = 220; x < 300; x++) {
+//castle floor
+for (var x = 220; x < 320; x++) {
     level[x][17] = {
         asset: "stone",
         fillBelowTile: "stone_ground"
     };
 }
 
-for (var x = 220; x < 280; x++) {
-    for(var y=10; y < 17; y++) {
+//castle
+for (var x = 220; x < 300; x++) {
+    for(var y=6; y < 17; y++) {
         level[x][y] = {
             asset: "stone_castle"
         };
     }
 }
+
+for (var x = 220; x < 300; x++) {
+    if(x % 2 == 0) {
+        level[x][5] = {
+            asset: "stone_castle"
+        };
+    }
+}
+
+//after castle
+for (var x = 320; x < 350; x++) {
+    level[x][17] = {
+        asset: "ground",
+        fillBelowTile: "ground"
+    };
+}
+//end scene with fireworks
+for (var x = 350; x < 450; x++) {
+    level[x][16] = {
+        asset: "grass",
+        fillBelowTile: "ground"
+    };
+}
+
+// AREA 3 ------------------------------------------
+
+
 
 //helpers
 function hill(hillStart, hillSection, groundHeight, hillScale, groundTile, fillTile) {
