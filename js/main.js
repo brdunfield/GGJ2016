@@ -82,6 +82,12 @@ var Engine = function(canvasID) {
     window.onmousemove = function(e) {self.mousePos = {x:e.clientX, y:e.clientY};};
     window.onmouseup = function(e) {self.mouseUp(e);};
     
+    // scale the canvas to the size of the person's screen
+    this.innerHeight = 1080,
+        this.innerWidth = 1920;
+    this.context.scale(window.innerWidth/1920, window.innerHeight/1080);
+    
+    
     //Image loading - later
     self.initImageAssets.call(self);
     /*
@@ -211,7 +217,7 @@ Engine.prototype.animate = function(time) {
     }
 
     // if player has fallen off the screen, respawn
-    if (this.player.pos.y > window.innerHeight) {
+    if (this.player.pos.y > this.innerHeight) {
         this.respawn();
     }
     
@@ -344,9 +350,9 @@ Engine.prototype.animate = function(time) {
         if (this.xButton.x < 0)
             this.xButton.vel.x *= -1;
         
-        if (this.xButton.y > window.innerHeight - 50) {
+        if (this.xButton.y > this.innerHeight - 50) {
             this.xButton.vel.y = 0;
-            this.xButton.y = window.innerHeight - 50
+            this.xButton.y = this.innerHeight - 50
             this.xButton.falling = false;
             this.xButton.broken = true;
             this.cutscene = false;
@@ -374,18 +380,18 @@ Engine.prototype.render = function(time) {
     var ctx = this.context;
     ctx.textAlign = "left";
     // Clear last frame's images
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    ctx.clearRect(0, 0, this.innerWidth, this.innerHeight);
     
     // Draw images using loaded assets
     // Background
     // TODO LOOP
-    ctx.drawImage(this.images["background_01"],(-this.viewport.x/5)%this.images["background_01"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
-    ctx.drawImage(this.images["background_02"],(-this.viewport.x/4)%this.images["background_02"].width, 0, window.innerWidth, window.innerHeight, 0, 0, window.innerWidth, window.innerHeight);
+    ctx.drawImage(this.images["background_01"],(-this.viewport.x/5)%this.images["background_01"].width, 0, this.innerWidth, this.innerHeight, 0, 0, this.innerWidth, this.innerHeight);
+    ctx.drawImage(this.images["background_02"],(-this.viewport.x/4)%this.images["background_02"].width, 0, this.innerWidth, this.innerHeight, 0, 0, this.innerWidth, this.innerHeight);
 
     // render level present in the viewport
     var startx = Math.floor(-this.viewport.x/50)
-    for (var x=startx; x < (window.innerWidth/50) + startx + 1; x++) {     
-        for( var y=0; y < window.innerHeight/50; y++) {
+    for (var x=startx; x < (this.innerWidth/50) + startx + 1; x++) {     
+        for( var y=0; y < this.innerHeight/50; y++) {
             // check if there's a tile for this tile
             //console.log("checking: " + x + ", " + y);
             if (level[x] != undefined)
@@ -395,7 +401,7 @@ Engine.prototype.render = function(time) {
                     var numsprites = this.images[level[x][y].asset].width/50;
                     ctx.drawImage(this.images[level[x][y].asset],(Math.floor(time/1000)%numsprites)*50, 0 , 50, 50, (x*50+this.viewport.x), y*50, 50, 50);
                     if(level[x][y].fillBelowTile != undefined) {
-                        for(var b=y+1; b < window.innerHeight/50; b++) {
+                        for(var b=y+1; b < this.innerHeight/50; b++) {
                             ctx.drawImage(this.images[level[x][y].fillBelowTile], (x*50+this.viewport.x), b*50);
                         }
                     }
@@ -459,8 +465,8 @@ Engine.prototype.render = function(time) {
     
     if (this.dialog) {
         // render dialog box
-        var dx = (window.innerWidth/2) - 200,
-            dy = (window.innerHeight/2) - 100;
+        var dx = (this.innerWidth/2) - 200,
+            dy = (this.innerHeight/2) - 100;
         ctx.fillStyle = "#333";
         ctx.fillRect(dx, dy, 400, 200);
         ctx.fillStyle = "#eee";
@@ -512,21 +518,21 @@ Engine.prototype.render = function(time) {
         ctx.font = "10px arial";
 
 
-        for (var x=0; x< window.innerWidth; x+=50) {
+        for (var x=0; x< this.innerWidth; x+=50) {
 
             ctx.beginPath();
             ctx.moveTo(x, 0);
-            ctx.lineTo(x, window.innerHeight);
+            ctx.lineTo(x, this.innerHeight);
             ctx.stroke();
 
-            for( var y=0; y < window.innerHeight; y+=50) {
+            for( var y=0; y < this.innerHeight; y+=50) {
                 ctx.fillText("x:" + Math.floor((x-this.viewport.x)/50), x + 2, y + 10);
                 ctx.fillText("y:" + (y-this.viewport.y)/50, x + 2, y + 20)
 
                 if (x === 0) {
                     ctx.beginPath();
                     ctx.moveTo(0, y);
-                    ctx.lineTo(window.innerWidth, y);
+                    ctx.lineTo(this.innerWidth, y);
                     ctx.stroke();
                 }
             }
@@ -645,8 +651,8 @@ Engine.prototype.mouseDown = function(e) {
                 // left click - attack
                 // if dialog, check for button click
                 if (this.dialog) {
-                    var dx = (window.innerWidth/2) - 200,
-                        dy = (window.innerHeight/2) - 100;
+                    var dx = (this.innerWidth/2) - 200,
+                        dy = (this.innerHeight/2) - 100;
 
                     if (e.clientY > dy + 160 && e.clientY < dy + 185) {
                         if (e.clientX > dx + 50 && e.clientX < dx + 150) {
